@@ -113,16 +113,16 @@ lsblk
 
 ## Rebuild
 
-На установленной системе:
+На установленной системе, если твой flake лежит в `~/.config/nixos`:
 
 ```bash
-run0 nixos-rebuild switch --flake /etc/nixos#honor-magicbook-x16-pro
+run0 nixos-rebuild switch --flake ~/.config/nixos#honor-magicbook-x16-pro
 ```
 
 ## Update flake inputs
 
 ```bash
-run0 nix flake update --flake /etc/nixos
+run0 nix flake update --flake ~/.config/nixos
 ```
 
 ## Face auth / Howdy
