@@ -1,6 +1,7 @@
 { user, ... }:
 {
   imports = [
+    (import ../../dev/development.nix).homeModule
     ../../modules/home/fish/fish.nix
     ../../modules/home/gnome/gnome.nix
     ../../modules/home/virtualization/virtualization.nix

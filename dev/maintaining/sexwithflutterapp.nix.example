@@ -1,0 +1,33 @@
+{ lib
+, flutter
+, fetchFromGitHub
+}:
+
+flutter.buildFlutterApplication rec {
+  pname = "sexwithflutterapp";
+  version = "0.1.0";
+
+  src = fetchFromGitHub {
+    owner = "example";
+    repo = "sexwithflutterapp";
+    rev = "v${version}";
+    hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+  };
+
+  # The official nixpkgs path for Flutter desktop apps is
+  # flutter.buildFlutterApplication, not a raw mkDerivation.
+  #
+  # Outside nixpkgs you may also lean on auto-generated metadata,
+  # but the stable explicit approach is to vendor these files.
+  pubspecLockFile = ./pubspec.lock;
+  depsListFile = ./deps.json;
+  vendorHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+
+  meta = with lib; {
+    description = "Example Flutter desktop packaging template";
+    homepage = "https://github.com/example/sexwithflutterapp";
+    license = licenses.unfreeRedistributable;
+    maintainers = [ ];
+    platforms = platforms.linux;
+  };
+}

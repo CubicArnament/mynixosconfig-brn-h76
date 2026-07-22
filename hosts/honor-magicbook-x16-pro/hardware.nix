@@ -27,7 +27,10 @@
   ];
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  hardware.enableRedistributableFirmware = true;
+  # Enable the full firmware set, including blobs packaged as unfree.
+  # This goes beyond only redistributable firmware and relies on
+  # nixpkgs.config.allowUnfree = true in the host configuration.
+  hardware.enableAllFirmware = true;
   services.fwupd.enable = true;
   services.power-profiles-daemon.enable = true;
 

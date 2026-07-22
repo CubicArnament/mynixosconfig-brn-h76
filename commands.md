@@ -180,6 +180,29 @@ systemctl status k3s
 kubectl get nodes
 ```
 
+## Nix development
+
+Для dev workflow в системе включены:
+
+- `nix-command` и `flakes`
+- `direnv`
+- `nix-direnv`
+- `trusted-users = [ "root" "@wheel" ]`
+
+Базовое использование:
+
+```bash
+cd <project>
+direnv allow
+nix develop
+```
+
+В `fish` также добавлены короткие abbreviations:
+
+- `nd` → `nix develop`
+- `nf` → `nix flake check`
+- `nu` → `nix flake update`
+
 ## Wayland screen sharing
 
 Для `OBS`, `Discord` и других Wayland-приложений screen sharing в этой

@@ -11,6 +11,8 @@
 - `GRUB` UEFI + `btrfsSupport` + холодная Nord/NixOS-стилизация
 - `run0` вместо `sudo`, с обязательной аутентификацией для `wheel`
 - `Howdy` для face auth через веб-камеру
+- глобально разрешены `unfree` пакеты и firmware blobs
+- поддержка `nix develop` через `direnv` / `nix-direnv` и dev-friendly Nix settings
 - отдельные модули под `kernel`, `laptop`, `virtualization`, `fish`, `packages`
 
 ## Структура
@@ -20,6 +22,8 @@
 - `hosts/honor-magicbook-x16-pro/user.nix` — имя пользователя, shell, home directory и другие user-specific параметры
 - `modules/nixos/` — системные модули
 - `modules/home/` — Home Manager модули
+- `dev/development.nix` — общие system/home dev-настройки (`nix develop`, `direnv`, `nix-direnv`)
+- `dev/maintaining/` — шаблоны для пакетов, которым нужна отдельная деривация
 - `commands.md` — готовые команды для установки, обновления и пост-настройки
 
 ## Установка

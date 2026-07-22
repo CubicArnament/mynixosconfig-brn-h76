@@ -7,6 +7,7 @@
     ../../modules/nixos/disko/disko.nix
     ../../modules/nixos/auth/auth.nix
     ../../modules/nixos/howdy/howdy.nix
+    (import ../../dev/development.nix).nixosModule
     ../../modules/nixos/gnome/gnome.nix
     ../../modules/nixos/kernel/kernel.nix
     ../../modules/nixos/laptop/laptop.nix
@@ -32,7 +33,11 @@
     };
   };
 
-  nixpkgs.config.allowUnfree = true;
+  nixpkgs.config = {
+    # Allow proprietary packages globally for this host.
+    allowUnfree = true;
+    allowUnfreePredicate = _: true;
+  };
 
   time.timeZone = lib.mkDefault "UTC";
   i18n.defaultLocale = "ru_RU.UTF-8";

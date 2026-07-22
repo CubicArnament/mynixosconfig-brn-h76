@@ -1,0 +1,43 @@
+{ lib
+, stdenv
+, fetchFromGitHub
+}:
+
+stdenv.mkDerivation rec {
+  pname = "example-package";
+  version = "0.1.0";
+
+  src = fetchFromGitHub {
+    owner = "example";
+    repo = "example-package";
+    rev = "v${version}";
+    hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+  };
+
+  # Add build-time tools here when needed.
+  nativeBuildInputs = [ ];
+
+  # Add runtime/system libraries here when needed.
+  buildInputs = [ ];
+
+  # Override these phases only if upstream does not follow standard layouts.
+  buildPhase = ''
+    runHook preBuild
+    runHook postBuild
+  '';
+
+  installPhase = ''
+    runHook preInstall
+    mkdir -p $out
+    cp -r . $out/share/${pname}
+    runHook postInstall
+  '';
+
+  meta = with lib; {
+    description = "Example mkDerivation template";
+    homepage = "https://github.com/example/example-package";
+    license = licenses.mit;
+    maintainers = [ ];
+    platforms = platforms.linux;
+  };
+}
