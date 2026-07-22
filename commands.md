@@ -4,7 +4,63 @@
 
 Запускать **с Linux-машины / live ISO**, не с Windows.
 
-Из корня репозитория:
+Важно:
+
+- для `nixos-anywhere` нужен доступ по `SSH`
+- поэтому не рассчитывай на обычный `NixOS` live ISO, если в нём у тебя не поднят `sshd`
+- на практике проще использовать **minimal ISO**, где сценарий с `sshd` подходит лучше
+- для `disko` не используй raw-disk `UUID`: на этапе разметки правильнее whole-disk `by-id`
+
+### One-shot install
+
+Основной сценарий теперь такой — **одна команда из корня репозитория**:
+
+```bash
+nix run .#install-honor-magicbook -- wkubearnament@<target-host>
+```
+
+Что делает app:
+
+1. заходит по `SSH` на целевой host
+2. консервативно сортирует install-диски по приоритету `NVMe > SATA SSD > прочий SSD > HDD`
+3. если найдено несколько кандидатов — в обычном TTY предлагает **текстовый выбор без графики**
+4. если пользователь не ответил за 20 секунд или сессия неинтерактивная — автоматически берёт **первый кандидат**
+5. первый кандидат — это самый быстрый класс диска, а внутри класса самый ранний device order
+6. пытается найти стабильный `cameraDevicePath` через `/dev/v4l/by-id`, затем `by-path`
+7. если камера не найдена — **не падает**, а просто не пишет `cameraDevicePath`
+8. пишет в лог, как именно был выбран диск: `AUTOSELECTED=1` / `USERSELECTED=1`
+9. пишет локальный файл
+   `hosts/honor-magicbook-x16-pro/local-device-paths.nix`
+10. запускает `nixos-anywhere` уже с корректным flake-конфигом
+
+Если у тебя многодисковая машина и ты не хочешь полагаться на автоселект,
+передай нужный `by-id` явно через override.
+
+`selectionSource` в выводе покажет, был ли это `explicit-override`,
+`interactive-menu`, `single-candidate` или `auto-first-candidate`.
+
+### Auto-detect only
+
+Если хочешь только сгенерировать пути устройств без установки:
+
+```bash
+nix run .#fetch-target-device-paths -- wkubearnament@<target-host>
+```
+
+Если нужно явно переопределить диск или камеру:
+
+```bash
+nix run .#fetch-target-device-paths -- \
+  wkubearnament@<target-host> \
+  hosts/honor-magicbook-x16-pro/local-device-paths.nix \
+  /dev/disk/by-id/nvme-... \
+  /dev/v4l/by-id/...-video-index0
+```
+
+### Low-level fallback
+
+Голая команда `nixos-anywhere` оставлена как fallback, но сама по себе она **не умеет**
+до локальной оценки flake заранее узнать remote `disk by-id`.
 
 ```bash
 nix run github:nix-community/nixos-anywhere -- \

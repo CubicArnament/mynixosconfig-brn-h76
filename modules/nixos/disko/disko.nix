@@ -1,7 +1,9 @@
-{ ... }:
+{ diskDevice ? "/dev/nvme0n1", ... }:
 let
-  # Если NVMe у тебя называется иначе, поменяй путь здесь.
-  diskDevice = "/dev/nvme0n1";
+  # Для disko raw-disk UUID не подходит: файловой UUID ещё нет до разметки.
+  # Поэтому правильный переносимый вариант для install-target — /dev/disk/by-id.
+  # Скрипт scripts/fetch-target-device-paths.sh может сгенерировать
+  # hosts/honor-magicbook-x16-pro/local-device-paths.nix без ручной правки repo.
   # 16G swap без расчёта на гибернацию, под конфигурацию с 16 ГБ RAM.
   swapSize = "16G";
   commonMountOptions = [

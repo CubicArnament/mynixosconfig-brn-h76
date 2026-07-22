@@ -25,18 +25,69 @@
     };
   };
 
-  outputs = inputs@{ nixpkgs, disko, home-manager, nix-flatpak, ... }: let
+  outputs = inputs@{ self, nixpkgs, disko, home-manager, nix-flatpak, ... }: let
     system = "x86_64-linux";
+    pkgs = import nixpkgs { inherit system; };
     hostName = "honor-magicbook-x16-pro";
+    hostDir = ./hosts/honor-magicbook-x16-pro;
+    localDevicePathsPath = hostDir + "/local-device-paths.nix";
+    localDevicePaths = if builtins.pathExists localDevicePathsPath then import localDevicePathsPath else { };
+    localDevicePathsRel = "hosts/${hostName}/local-device-paths.nix";
     # Подправь под свой Linux-username, если нужен другой.
     userName = "wkubearnament";
+
+    fetchTargetDevicePaths = pkgs.writeShellApplication {
+      name = "fetch-target-device-paths";
+      runtimeInputs = with pkgs; [ coreutils findutils gawk gnused openssh util-linux ];
+      text = builtins.readFile ./scripts/fetch-target-device-paths.sh;
+    };
+
+    installHonorMagicbook = pkgs.writeShellApplication {
+      name = "install-honor-magicbook";
+      runtimeInputs = with pkgs; [ git nix openssh ];
+      text = ''
+        set -eu
+
+        HOST="${1:-}"
+        if [ -z "$HOST" ]; then
+          echo "usage: install-honor-magicbook <ssh-target>" >&2
+          exit 1
+        fi
+
+        REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+        cd "$REPO_ROOT"
+
+        ${fetchTargetDevicePaths}/bin/fetch-target-device-paths "$HOST" "${localDevicePathsRel}"
+
+        nix run github:nix-community/nixos-anywhere -- \
+          --flake .#${hostName} \
+          "$HOST"
+      '';
+    };
   in {
+    packages.${system} = {
+      inherit fetchTargetDevicePaths installHonorMagicbook;
+      default = installHonorMagicbook;
+    };
+
+    apps.${system} = {
+      fetch-target-device-paths = {
+        type = "app";
+        program = "${fetchTargetDevicePaths}/bin/fetch-target-device-paths";
+      };
+      install-honor-magicbook = {
+        type = "app";
+        program = "${installHonorMagicbook}/bin/install-honor-magicbook";
+      };
+      default = self.apps.${system}.install-honor-magicbook;
+    };
+
     nixosConfigurations.${hostName} = nixpkgs.lib.nixosSystem {
       inherit system;
 
       specialArgs = {
         inherit inputs hostName userName;
-      };
+      } // localDevicePaths;
 
       modules = [
         disko.nixosModules.disko
@@ -48,7 +99,7 @@
           home-manager.useUserPackages = true;
           home-manager.extraSpecialArgs = {
             inherit inputs hostName userName;
-          };
+          } // localDevicePaths;
           home-manager.users.${userName} = import ./hosts/${hostName}/home.nix;
         }
       ];

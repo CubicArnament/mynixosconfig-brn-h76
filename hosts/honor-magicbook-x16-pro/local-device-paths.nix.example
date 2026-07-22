@@ -1,0 +1,8 @@
+{
+  # Whole-disk path for disko. Prefer /dev/disk/by-id over /dev/nvme0n1.
+  diskDevice = "/dev/disk/by-id/nvme-CHANGE-ME";
+
+  # Stable camera path for Howdy. Prefer /dev/v4l/by-id, fallback to /dev/v4l/by-path.
+  # If no stable symlink exists, this attribute may be omitted.
+  cameraDevicePath = "/dev/v4l/by-id/CHANGE-ME-video-index0";
+}

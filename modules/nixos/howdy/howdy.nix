@@ -1,4 +1,4 @@
-{ ... }:
+{ cameraDevicePath ? "/dev/video0", ... }:
 {
   security.pam = {
     # Keep password fallback everywhere and allow face auth as an alternative.
@@ -56,10 +56,11 @@
         };
 
         video = {
-          # Internal webcam is usually /dev/video0 on laptops like this one.
-          # After installation verify with `ls -l /dev/video* /dev/v4l/by-path`
-          # and adjust if GNOME/polkit prompts do not see the camera.
-          device_path = "/dev/video0";
+          # Prefer a stable v4l symlink over /dev/videoN renumbering.
+          # scripts/fetch-target-device-paths.sh can auto-generate
+          # hosts/honor-magicbook-x16-pro/local-device-paths.nix with a
+          # cameraDevicePath from /dev/v4l/by-id or /dev/v4l/by-path.
+          device_path = cameraDevicePath;
           device_format = "v4l2";
           recording_plugin = "opencv";
           timeout = 4;

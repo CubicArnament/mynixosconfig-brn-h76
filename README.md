@@ -24,6 +24,28 @@
 
 Предполагаемый сценарий — через `nixos-anywhere` с Linux-машины или live-среды, а не с Windows.
 
+Zero-touch сценарий установки теперь завязан на flake app:
+
+```bash
+nix run .#install-honor-magicbook -- wkubearnament@<target-host>
+```
+
+Эта команда сначала автоматически генерирует локальный файл устройств:
+
+```text
+hosts/honor-magicbook-x16-pro/local-device-paths.nix
+```
+
+а потом сама запускает `nixos-anywhere`.
+
+В логах скрипт явно печатает `AUTOSELECTED` / `USERSELECTED` и `selectionSource`,
+чтобы было видно, диск был выбран автоматически, через интерактивное меню или
+через явный override.
+
+Файл нужен, чтобы не хардкодить `diskDevice` и `cameraDevicePath` в tracked-конфиге.
+Для install-диска здесь используется **`/dev/disk/by-id`**, а не `UUID`, потому что
+`disko` работает с **целым диском до создания файловых систем**.
+
 Самая важная особенность дисков:
 
 - `/.snapshots` монтируется как **отдельный Btrfs subvolume** `@snapshots`
