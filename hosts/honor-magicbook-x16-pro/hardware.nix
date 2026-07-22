@@ -17,9 +17,13 @@
     "rtsx_pci_sdmmc"
   ];
 
+  # Integrated webcam on this Honor platform is expected to work via the
+  # standard in-kernel UVC stack rather than an OEM out-of-tree driver.
+  # Keeping uvcvideo explicit here makes the intent clear for Howdy/webcam auth.
   boot.kernelModules = [
     "kvm-amd"
     "huawei_wmi"
+    "uvcvideo"
   ];
   boot.kernelPackages = pkgs.linuxPackages_latest;
 

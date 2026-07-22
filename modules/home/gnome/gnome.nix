@@ -1,24 +1,63 @@
-{ ... }:
+{ pkgs, ... }:
 {
+  gtk = {
+    enable = true;
+    theme = {
+      package = pkgs.nordic;
+      name = "Nordic-darker";
+    };
+    iconTheme = {
+      package = pkgs.papirus-icon-theme;
+      name = "Papirus-Dark";
+    };
+    cursorTheme = {
+      package = pkgs.bibata-cursors;
+      name = "Bibata-Modern-Ice";
+      size = 24;
+    };
+    colorScheme = "dark";
+  };
+
   dconf = {
     enable = true;
     settings = {
       "org/gnome/desktop/interface" = {
         color-scheme = "prefer-dark";
+        gtk-theme = "Nordic-darker";
+        icon-theme = "Papirus-Dark";
+        cursor-theme = "Bibata-Modern-Ice";
         show-battery-percentage = true;
         clock-show-weekday = true;
         clock-show-date = true;
         enable-hot-corners = false;
       };
 
+      "org/gnome/desktop/background" = {
+        picture-uri = "file://${pkgs.nixos-artwork.wallpapers.gnome-dark.gnomeFilePath}";
+        picture-uri-dark = "file://${pkgs.nixos-artwork.wallpapers.gnome-dark.gnomeFilePath}";
+        picture-options = "zoom";
+      };
+
+      "org/gnome/desktop/screensaver" = {
+        picture-uri = "file://${pkgs.nixos-artwork.wallpapers.gnome-dark.gnomeFilePath}";
+        picture-options = "zoom";
+      };
+
       "org/gnome/desktop/peripherals/touchpad" = {
         tap-to-click = true;
+        tap-and-drag = true;
+        natural-scroll = true;
         two-finger-scrolling-enabled = true;
+        edge-scrolling-enabled = false;
         click-method = "fingers";
+        disable-while-typing = true;
+        send-events = "enabled";
+        speed = 0.35;
       };
 
       "org/gnome/desktop/wm/preferences" = {
         button-layout = "appmenu:minimize,maximize,close";
+        theme = "Nordic-darker";
       };
 
       "org/gnome/mutter" = {
@@ -43,12 +82,18 @@
           "dash-to-dock@micxgx.gmail.com"
           "just-perfection-desktop@just-perfection"
           "Vitals@CoreCoding.com"
+          "user-theme@gnome-shell-extensions.gcampax.github.com"
+          "touchpad-gesture-customization@coooolapps.com"
         ];
         favorite-apps = [
           "org.gnome.Nautilus.desktop"
           "org.gnome.Console.desktop"
           "org.gnome.Settings.desktop"
         ];
+      };
+
+      "org/gnome/shell/extensions/user-theme" = {
+        name = "Nordic-darker";
       };
 
       "org/gnome/shell/keybindings" = {
@@ -76,14 +121,27 @@
         move-to-monitor-right = [ "<Super><Shift>Right" ];
       };
 
+      "org/gnome/shell/window-switcher" = {
+        current-workspace-only = false;
+      };
+
+      "org/gnome/shell/app-switcher" = {
+        current-workspace-only = false;
+      };
+
       "org/gnome/shell/extensions/dash-to-dock" = {
         dock-position = "BOTTOM";
+        dock-fixed = false;
         extend-height = false;
         intellihide = true;
         show-mounts = false;
         show-trash = false;
         click-action = "focus-minimize-or-previews";
         scroll-action = "switch-workspace";
+        dash-max-icon-size = 40;
+        transparency-mode = "DYNAMIC";
+        running-indicator-style = "DOTS";
+        show-show-apps-button = true;
       };
 
       "org/gnome/shell/extensions/caffeine" = {

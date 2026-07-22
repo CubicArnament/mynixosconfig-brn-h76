@@ -50,6 +50,10 @@ in {
                   mountOptions = commonMountOptions;
                 };
 
+                # Для snapper важно, чтобы /.snapshots был отдельной точкой
+                # монтирования Btrfs subvolume, но при этом был виден внутри /
+                # как обычный подкаталог .snapshots корневого subvolume.
+                # Поэтому subvolume монтируется именно в /.snapshots.
                 "/@snapshots" = {
                   mountpoint = "/.snapshots";
                   mountOptions = commonMountOptions;

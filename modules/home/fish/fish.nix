@@ -6,8 +6,8 @@
       set -g fish_greeting
     '';
     shellAliases = {
-      rebuild = "sudo nixos-rebuild switch --flake /etc/nixos#${hostName}";
-      update = "sudo nix flake update --flake /etc/nixos";
+      rebuild = "run0 nixos-rebuild switch --flake /etc/nixos#${hostName}";
+      update = "run0 nix flake update --flake /etc/nixos";
     };
     plugins = [
       {

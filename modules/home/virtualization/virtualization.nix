@@ -5,7 +5,6 @@
     kubectl
     quickemu
     qemu
-    spice
     spice-gtk
     virtio-win
     virt-manager

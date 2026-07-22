@@ -18,9 +18,14 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nix-flatpak = {
+      url = "github:gmodena/nix-flatpak/?ref=v0.7.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = inputs@{ nixpkgs, disko, home-manager, ... }: let
+  outputs = inputs@{ nixpkgs, disko, home-manager, nix-flatpak, ... }: let
     system = "x86_64-linux";
     hostName = "honor-magicbook-x16-pro";
     # Подправь под свой Linux-username, если нужен другой.
@@ -36,6 +41,7 @@
       modules = [
         disko.nixosModules.disko
         home-manager.nixosModules.home-manager
+        nix-flatpak.nixosModules.nix-flatpak
         ./hosts/${hostName}/configuration.nix
         {
           home-manager.useGlobalPkgs = true;

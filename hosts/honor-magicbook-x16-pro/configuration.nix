@@ -5,11 +5,14 @@
     ../../modules/nixos/bootloader/bootloader.nix
     ../../modules/nixos/btrfs/btrfs.nix
     ../../modules/nixos/disko/disko.nix
+    ../../modules/nixos/auth/auth.nix
+    ../../modules/nixos/howdy/howdy.nix
     ../../modules/nixos/gnome/gnome.nix
     ../../modules/nixos/kernel/kernel.nix
     ../../modules/nixos/laptop/laptop.nix
     ../../modules/nixos/fish/fish.nix
     ../../modules/nixos/virtualization/virtualization.nix
+    ../../modules/nixos/packages/flatpak/flatpak.nix
     ../../modules/nixos/packages/system/system-pkgs.nix
   ];
 

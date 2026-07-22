@@ -15,6 +15,10 @@
     cleanupInterval = "1d";
 
     configs.root = {
+      # Snapper работает с корневым subvolume через mountpoint / и ожидает,
+      # что внутри него будет доступен /.snapshots как подкаталог.
+      # Сам /.snapshots при этом должен быть отдельным Btrfs subvolume,
+      # смонтированным отдельно disko-конфигом.
       SUBVOLUME = "/";
       FSTYPE = "btrfs";
       TIMELINE_CREATE = true;

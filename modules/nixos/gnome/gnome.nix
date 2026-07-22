@@ -15,6 +15,8 @@
     gnomeExtensions.dash-to-dock
     gnomeExtensions.just-perfection
     gnomeExtensions.vitals
+    gnomeExtensions.user-themes
+    gnomeExtensions.touchpad-gesture-customization
   ];
 
   # Huawei/Honor hotkeys приходят через huawei_wmi.
