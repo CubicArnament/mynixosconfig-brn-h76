@@ -17,6 +17,9 @@
 
 Основной сценарий теперь такой — **одна команда из корня репозитория**:
 
+> Замени `wkubearnament` на имя пользователя, которое задано в
+> `hosts/honor-magicbook-x16-pro/user.nix`, если ты его менял.
+
 ```bash
 nix run .#install-honor-magicbook -- wkubearnament@<target-host>
 ```
@@ -115,6 +118,9 @@ lsblk
 
 На установленной системе, если твой flake лежит в `~/.config/nixos`:
 
+> Имя пользователя и домашний путь централизованно задаются в
+> `hosts/honor-magicbook-x16-pro/user.nix`.
+
 ```bash
 run0 nixos-rebuild switch --flake ~/.config/nixos#honor-magicbook-x16-pro
 ```
@@ -124,6 +130,10 @@ run0 nixos-rebuild switch --flake ~/.config/nixos#honor-magicbook-x16-pro
 ```bash
 run0 nix flake update --flake ~/.config/nixos
 ```
+
+`run0` уже настроен так, что пользователь из группы `wheel` может повышать
+права только через аутентификацию: либо пароль, либо `Howdy`, если face auth
+сработал.
 
 ## Face auth / Howdy
 
@@ -169,6 +179,22 @@ systemctl status libvirtd
 systemctl status k3s
 kubectl get nodes
 ```
+
+## Wayland screen sharing
+
+Для `OBS`, `Discord` и других Wayland-приложений screen sharing в этой
+конфигурации завязан на `PipeWire + WirePlumber + xdg-desktop-portal-gnome`.
+
+Быстрые проверки на установленной системе:
+
+```bash
+systemctl --user status pipewire pipewire-pulse wireplumber
+systemctl status xdg-desktop-portal
+journalctl --user -u wireplumber -b
+```
+
+Если конкретный Electron-клиент всё ещё тупит под Wayland, проверь, что он
+запущен с Wayland/Ozone support, а не через старый X11 fallback.
 
 ## Webcam / UVC
 

@@ -1,4 +1,4 @@
-{ userName, ... }:
+{ user, ... }:
 {
   imports = [
     ../../modules/home/fish/fish.nix
@@ -8,12 +8,10 @@
   ];
 
   home = {
-    username = userName;
-    homeDirectory = "/home/${userName}";
-    stateVersion = "25.05";
-    sessionVariables = {
-      EDITOR = "vi";
-    };
+    username = user.name;
+    homeDirectory = user.homeDirectory;
+    stateVersion = user.homeStateVersion;
+    sessionVariables = user.sessionVariables;
   };
 
   programs.home-manager.enable = true;

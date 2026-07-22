@@ -7,8 +7,9 @@
 - `flake`-конфиг с `home-manager`, `disko`, `nixos-hardware`, `nix-flatpak`
 - `Btrfs` layout через `disko` с отдельным `/.snapshots` subvolume для `Snapper`
 - `GNOME` + Home Manager
+- `PipeWire + WirePlumber + xdg-desktop-portal` для нормального Wayland screen sharing
 - `GRUB` UEFI + `btrfsSupport` + холодная Nord/NixOS-стилизация
-- `run0` вместо `sudo`
+- `run0` вместо `sudo`, с обязательной аутентификацией для `wheel`
 - `Howdy` для face auth через веб-камеру
 - отдельные модули под `kernel`, `laptop`, `virtualization`, `fish`, `packages`
 
@@ -16,6 +17,7 @@
 
 - `flake.nix` — входная точка flake
 - `hosts/honor-magicbook-x16-pro/` — host-specific конфиг
+- `hosts/honor-magicbook-x16-pro/user.nix` — имя пользователя, shell, home directory и другие user-specific параметры
 - `modules/nixos/` — системные модули
 - `modules/home/` — Home Manager модули
 - `commands.md` — готовые команды для установки, обновления и пост-настройки
@@ -75,6 +77,10 @@ hosts/honor-magicbook-x16-pro/local-device-paths.nix
 - face auth вынесен в отдельный `Howdy`-модуль
 - встроенная веб-камера предполагается как стандартная `UVC` (`uvcvideo`)
 - для `Honor/Huawei` hotkeys используется `huawei_wmi` + `hwdb` mappings
+
+Имя пользователя, shell и домашняя директория теперь вынесены в
+`hosts/honor-magicbook-x16-pro/user.nix`, чтобы не править это по нескольким
+местам сразу.
 
 ## Команды
 

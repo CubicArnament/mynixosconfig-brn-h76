@@ -1,4 +1,4 @@
-{ lib, pkgs, hostName, userName, ... }:
+{ lib, pkgs, hostName, user, ... }:
 {
   imports = [
     ./hardware.nix
@@ -43,10 +43,12 @@
     options = "grp:alt_shift_toggle";
   };
 
-  users.users.${userName} = {
+  users.users.${user.name} = {
     isNormalUser = true;
-    description = "Primary user";
-    extraGroups = [ "wheel" "networkmanager" "libvirtd" ];
+    description = user.description;
+    extraGroups = user.extraGroups;
+    shell = user.shellPackage;
+    home = user.homeDirectory;
   };
 
 
@@ -59,16 +61,26 @@
     pulse.enable = true;
     alsa.enable = true;
     alsa.support32Bit = true;
+    wireplumber.enable = true;
   };
 
   hardware.bluetooth.enable = true;
 
+  # Wayland screen sharing for OBS/Discord/Electron apps depends on
+  # PipeWire + xdg-desktop-portal. GNOME's portal backend should be the
+  # primary implementation, with GTK left as a compatibility fallback.
   xdg.portal = {
     enable = true;
+    xdgOpenUsePortal = true;
     extraPortals = [
       pkgs.xdg-desktop-portal-gnome
       pkgs.xdg-desktop-portal-gtk
     ];
+    config = {
+      common = {
+        default = [ "gnome" "gtk" ];
+      };
+    };
   };
 
   system.stateVersion = "25.05";

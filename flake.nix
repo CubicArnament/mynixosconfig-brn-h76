@@ -30,11 +30,11 @@
     pkgs = import nixpkgs { inherit system; };
     hostName = "honor-magicbook-x16-pro";
     hostDir = ./hosts/honor-magicbook-x16-pro;
+    user = import (hostDir + "/user.nix") { inherit pkgs; };
     localDevicePathsPath = hostDir + "/local-device-paths.nix";
     localDevicePaths = if builtins.pathExists localDevicePathsPath then import localDevicePathsPath else { };
     localDevicePathsRel = "hosts/${hostName}/local-device-paths.nix";
-    # Подправь под свой Linux-username, если нужен другой.
-    userName = "wkubearnament";
+    userName = user.name;
 
     fetchTargetDevicePaths = pkgs.writeShellApplication {
       name = "fetch-target-device-paths";
@@ -86,7 +86,7 @@
       inherit system;
 
       specialArgs = {
-        inherit inputs hostName userName;
+        inherit inputs hostName user userName;
       } // localDevicePaths;
 
       modules = [
@@ -98,9 +98,9 @@
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
           home-manager.extraSpecialArgs = {
-            inherit inputs hostName userName;
+            inherit inputs hostName user userName;
           } // localDevicePaths;
-          home-manager.users.${userName} = import ./hosts/${hostName}/home.nix;
+          home-manager.users.${user.name} = import ./hosts/${hostName}/home.nix;
         }
       ];
     };

@@ -6,5 +6,6 @@
     openssh
     pciutils
     usbutils
+    nano
   ];
 }
