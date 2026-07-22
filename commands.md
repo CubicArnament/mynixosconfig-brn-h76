@@ -10,6 +10,8 @@
 - поэтому не рассчитывай на обычный `NixOS` live ISO, если в нём у тебя не поднят `sshd`
 - на практике проще использовать **minimal ISO**, где сценарий с `sshd` подходит лучше
 - для `disko` не используй raw-disk `UUID`: на этапе разметки правильнее whole-disk `by-id`
+- `disko` и установка `NixOS` в этом репозитории **полностью уничтожают данные на выбранном install-диске**
+- ты сам отвечаешь за выбор целевого диска; конфиг и скрипты лишь пытаются снизить риск ошибки, но не дают гарантий сохранности данных
 
 ### One-shot install
 
@@ -24,15 +26,18 @@ nix run .#install-honor-magicbook -- wkubearnament@<target-host>
 1. заходит по `SSH` на целевой host
 2. консервативно сортирует install-диски по приоритету `NVMe > SATA SSD > прочий SSD > HDD`
 3. жёстко фильтрует только подходящие whole-disk кандидаты и игнорирует `usb`, `loop`, `zram`, `md`, `dm-*`, `sr*`
-4. если найдено несколько кандидатов — в обычном TTY предлагает **текстовый выбор без графики**
-5. если пользователь не ответил за 20 секунд или сессия неинтерактивная/headless — автоматически берёт **первый кандидат**
-6. первый кандидат — это самый быстрый класс диска, а внутри класса самый ранний device order
-7. пытается найти стабильный `cameraDevicePath` через `/dev/v4l/by-id`, затем `by-path`
-8. если камера не найдена — **не падает**, а просто не пишет `cameraDevicePath`
-9. пишет в лог, как именно был выбран диск: `AUTOSELECTED=1` / `USERSELECTED=1`
-10. пишет локальный файл
+4. пытается исключить уже занятые диски по `mountpoints`, `holders` и признаку `current-root`, если есть более безопасные свободные кандидаты
+5. если найдено несколько кандидатов — в обычном TTY предлагает **текстовый выбор без графики**
+6. если пользователь не ответил за 20 секунд или сессия неинтерактивная/headless — автоматически берёт **первый кандидат**
+7. первый кандидат — это самый быстрый класс диска, а внутри класса самый ранний device order
+8. если выбранный диск выглядит занятым, скрипт явно предупреждает, что **все данные будут уничтожены**
+9. в интерактивной сессии можно отменить wipe, ответив `NO`; если ответа нет — действие по умолчанию это **wipe и продолжение установки**
+10. пытается найти стабильный `cameraDevicePath` через `/dev/v4l/by-id`, затем `by-path`
+11. если камера не найдена — **не падает**, а просто не пишет `cameraDevicePath`
+12. пишет в лог, как именно был выбран диск: `AUTOSELECTED=1` / `USERSELECTED=1`
+13. пишет локальный файл
    `hosts/honor-magicbook-x16-pro/local-device-paths.nix`
-11. запускает `nixos-anywhere` уже с корректным flake-конфигом
+14. запускает `nixos-anywhere` уже с корректным flake-конфигом
 
 Если у тебя многодисковая машина и ты не хочешь полагаться на автоселект,
 передай нужный `by-id` явно через override.
@@ -41,9 +46,10 @@ nix run .#install-honor-magicbook -- wkubearnament@<target-host>
 `env-disk-index`, `interactive-menu`, `single-candidate`,
 `auto-timeout-or-default` или `auto-noninteractive`.
 
-Скрипт также печатает `interactiveTTY`, `originalCandidateCount` и
-`filteredCandidateCount`, чтобы в логах было видно, почему был выбран именно
-этот диск.
+Скрипт также печатает `interactiveTTY`, `originalCandidateCount`,
+`filteredCandidateCount`, `occupancyFilterApplied`, `diskOccupied`,
+`occupiedBecause` и `destructiveConfirmation`, чтобы в логах было видно,
+почему был выбран именно этот диск и как была подтверждена очистка.
 
 ### Auto-detect only
 
@@ -69,11 +75,18 @@ nix run .#fetch-target-device-paths -- \
 ```bash
 INSTALL_DISK_FILTER=nvme nix run .#fetch-target-device-paths -- wkubearnament@<target-host>
 INSTALL_DISK_FILTER=Samsung INSTALL_DISK_INDEX=2 nix run .#fetch-target-device-paths -- wkubearnament@<target-host>
+INSTALL_DISK_FILTER=system nix run .#fetch-target-device-paths -- wkubearnament@<target-host>
+INSTALL_DISK_FILTER=root nix run .#fetch-target-device-paths -- wkubearnament@<target-host>
 ```
 
 `INSTALL_DISK_FILTER` матчит класс диска (`nvme`, `sata-ssd`, `solid-state`, `hdd`)
 или подстроку в `by-id` / модели.
+Специальные значения `system` и `root` пытаются выбрать именно диск, на котором
+сейчас находится корневая система удалённой машины.
 `INSTALL_DISK_INDEX` — это номер кандидата, начиная с `1`, уже после фильтрации.
+
+Если выбран занятый диск, итоговая установка **сотрёт все данные на нём**.
+По умолчанию отсутствие ответа в destructive prompt трактуется как согласие на wipe.
 
 ### Low-level fallback
 

@@ -67,6 +67,49 @@ find_disk_by_id_any() {
   ' sh "$disk_real" {} + 2>/dev/null | head -n 1
 }
 
+root_backing_disk() {
+  root_source=$(findmnt -n -o SOURCE / 2>/dev/null || true)
+  [ -n "$root_source" ] || return 0
+
+  root_real=$(readlink -f "$root_source" 2>/dev/null || printf "%s\n" "$root_source")
+  root_pkname=$(lsblk -ndo PKNAME "$root_real" 2>/dev/null | head -n 1 || true)
+
+  if [ -n "$root_pkname" ]; then
+    printf "/dev/%s\n" "$root_pkname"
+    return 0
+  fi
+
+  root_type=$(lsblk -ndo TYPE "$root_real" 2>/dev/null | head -n 1 || true)
+  if [ "$root_type" = "disk" ]; then
+    printf "%s\n" "$root_real"
+  fi
+}
+
+disk_mount_summary() {
+  disk_real="$1"
+
+  lsblk -nrpo PATH,MOUNTPOINT "$disk_real" 2>/dev/null | awk '
+    NF >= 2 && $2 != "" {
+      mountpoint = substr($0, index($0, $2))
+      printf "%s:%s;", $1, mountpoint
+    }
+  ' | sed 's/;$//'
+}
+
+disk_holder_summary() {
+  disk_real="$1"
+
+  lsblk -nrpo PATH "$disk_real" 2>/dev/null | while IFS= read -r node; do
+    [ -n "$node" ] || continue
+    base=$(basename "$node")
+    holder_dir="/sys/class/block/$base/holders"
+    if [ -d "$holder_dir" ] && [ -n "$(ls -A "$holder_dir" 2>/dev/null || true)" ]; then
+      holders=$(ls "$holder_dir" 2>/dev/null | tr '\n' ',' | sed 's/,$//')
+      printf "%s:%s;" "$node" "$holders"
+    fi
+  done | sed 's/;$//'
+}
+
 candidate_lines() {
   lsblk -dnpo PATH,TYPE,RM,RO,ROTA,TRAN,SIZE,MODEL 2>/dev/null | awk '
     $2 == "disk" && $3 == "0" && $4 == "0" && $6 != "usb" {
@@ -106,6 +149,7 @@ candidate_lines() {
 
 emit_disk_candidates() {
   lines=$(candidate_lines)
+  root_disk=$(root_backing_disk)
 
   if [ -z "$lines" ]; then
     echo "No internal non-USB disks found on remote host." >&2
@@ -124,7 +168,39 @@ emit_disk_candidates() {
     fi
     [ -n "$byid" ] || continue
 
-    printf "DISK|%s|%s|%s|%s|%s|%s\n" "$priority" "$byid" "$path" "$class" "$size" "$model"
+    mount_summary=$(disk_mount_summary "$path")
+    holder_summary=$(disk_holder_summary "$path")
+    root_backing=0
+    occupied=0
+    occupancy_reasons=""
+
+    if [ -n "$mount_summary" ]; then
+      occupied=1
+      occupancy_reasons="mountpoints"
+    fi
+
+    if [ -n "$holder_summary" ]; then
+      occupied=1
+      if [ -n "$occupancy_reasons" ]; then
+        occupancy_reasons="$occupancy_reasons,holders"
+      else
+        occupancy_reasons="holders"
+      fi
+    fi
+
+    if [ -n "$root_disk" ] && [ "$path" = "$root_disk" ]; then
+      root_backing=1
+      occupied=1
+      if [ -n "$occupancy_reasons" ]; then
+        occupancy_reasons="$occupancy_reasons,current-root"
+      else
+        occupancy_reasons="current-root"
+      fi
+    fi
+
+    printf "DISK|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s\n" \
+      "$priority" "$byid" "$path" "$class" "$size" "$model" \
+      "$occupied" "$root_backing" "$occupancy_reasons" "$mount_summary" "$holder_summary"
   done
 }
 
@@ -178,21 +254,32 @@ fi
 
 ORIGINAL_DISK_COUNT=$(printf "%s\n" "$DISK_LINES" | sed '/^$/d' | wc -l)
 
+OCCUPANCY_FILTER_APPLIED=0
+
 if [ -n "$INSTALL_DISK_FILTER" ] && [ -z "$DISK_OVERRIDE" ]; then
-  FILTERED_DISK_LINES=$(printf "%s\n" "$DISK_LINES" | awk -F'|' -v needle="$INSTALL_DISK_FILTER" '
-    BEGIN {
-      needle_l = tolower(needle)
-    }
-    {
-      line_l = tolower($0)
-      class_l = tolower($5)
-      model_l = tolower($7)
-      byid_l = tolower($3)
-      if (class_l == needle_l || index(line_l, needle_l) > 0 || index(model_l, needle_l) > 0 || index(byid_l, needle_l) > 0) {
-        print $0
-      }
-    }
-  ')
+  FILTER_KIND=$(printf "%s" "$INSTALL_DISK_FILTER" | tr '[:upper:]' '[:lower:]')
+
+  case "$FILTER_KIND" in
+    system|root)
+      FILTERED_DISK_LINES=$(printf "%s\n" "$DISK_LINES" | awk -F'|' '$9 == "1"')
+      ;;
+    *)
+      FILTERED_DISK_LINES=$(printf "%s\n" "$DISK_LINES" | awk -F'|' -v needle="$INSTALL_DISK_FILTER" '
+        BEGIN {
+          needle_l = tolower(needle)
+        }
+        {
+          line_l = tolower($0)
+          class_l = tolower($5)
+          model_l = tolower($7)
+          byid_l = tolower($3)
+          if (class_l == needle_l || index(line_l, needle_l) > 0 || index(model_l, needle_l) > 0 || index(byid_l, needle_l) > 0) {
+            print $0
+          }
+        }
+      ')
+      ;;
+  esac
 
   if [ -z "$FILTERED_DISK_LINES" ]; then
     echo "INSTALL_DISK_FILTER=$INSTALL_DISK_FILTER did not match any install disk candidates on $HOST." >&2
@@ -200,6 +287,17 @@ if [ -n "$INSTALL_DISK_FILTER" ] && [ -z "$DISK_OVERRIDE" ]; then
   fi
 
   DISK_LINES="$FILTERED_DISK_LINES"
+fi
+
+if [ -z "$DISK_OVERRIDE" ]; then
+  UNOCCUPIED_DISK_LINES=$(printf "%s\n" "$DISK_LINES" | awk -F'|' '$8 == "0"')
+  if [ -n "$UNOCCUPIED_DISK_LINES" ]; then
+    FILTER_KIND=$(printf "%s" "$INSTALL_DISK_FILTER" | tr '[:upper:]' '[:lower:]')
+    if [ "$FILTER_KIND" != "system" ] && [ "$FILTER_KIND" != "root" ]; then
+      DISK_LINES="$UNOCCUPIED_DISK_LINES"
+      OCCUPANCY_FILTER_APPLIED=1
+    fi
+  fi
 fi
 
 DISK_COUNT=$(printf "%s\n" "$DISK_LINES" | sed '/^$/d' | wc -l)
@@ -268,6 +366,50 @@ DISK_REAL=$(printf "%s\n" "$SELECTED_LINE" | awk -F'|' '{ print $4 }')
 DISK_CLASS=$(printf "%s\n" "$SELECTED_LINE" | awk -F'|' '{ print $5 }')
 DISK_SIZE=$(printf "%s\n" "$SELECTED_LINE" | awk -F'|' '{ print $6 }')
 DISK_MODEL=$(printf "%s\n" "$SELECTED_LINE" | awk -F'|' '{ print $7 }')
+DISK_OCCUPIED=$(printf "%s\n" "$SELECTED_LINE" | awk -F'|' '{ print $8 }')
+DISK_ROOT_BACKING=$(printf "%s\n" "$SELECTED_LINE" | awk -F'|' '{ print $9 }')
+DISK_OCCUPANCY_REASONS=$(printf "%s\n" "$SELECTED_LINE" | awk -F'|' '{ print $10 }')
+DISK_MOUNT_SUMMARY=$(printf "%s\n" "$SELECTED_LINE" | awk -F'|' '{ print $11 }')
+DISK_HOLDER_SUMMARY=$(printf "%s\n" "$SELECTED_LINE" | awk -F'|' '{ print $12 }')
+DESTRUCTIVE_CONFIRMATION="not-needed"
+
+if [ "$DISK_OCCUPIED" = "1" ]; then
+  if [ "$INTERACTIVE_TTY" -eq 1 ]; then
+    echo "WARNING: selected disk appears to be in use and all data on it will be permanently destroyed by disko/NixOS install." > /dev/tty
+    echo "  diskDevice = $DISK" > /dev/tty
+    if [ -n "$DISK_OCCUPANCY_REASONS" ]; then
+      echo "  occupiedBecause = $DISK_OCCUPANCY_REASONS" > /dev/tty
+    fi
+    if [ -n "$DISK_MOUNT_SUMMARY" ]; then
+      echo "  mountSummary = $DISK_MOUNT_SUMMARY" > /dev/tty
+    fi
+    if [ -n "$DISK_HOLDER_SUMMARY" ]; then
+      echo "  holderSummary = $DISK_HOLDER_SUMMARY" > /dev/tty
+    fi
+    printf "Type 'NO' within 20s to abort. Default action is WIPE and continue: " > /dev/tty
+
+    WIPE_REPLY=$(timeout 20 sh -c 'IFS= read -r ans < /dev/tty && printf "%s" "$ans"' 2>/dev/null || true)
+    WIPE_REPLY_LC=$(printf "%s" "$WIPE_REPLY" | tr '[:upper:]' '[:lower:]')
+
+    case "$WIPE_REPLY_LC" in
+      no|n|abort|cancel)
+        echo "Aborted because selected disk is occupied and user declined destructive wipe." >&2
+        exit 3
+        ;;
+      yes|y|wipe)
+        DESTRUCTIVE_CONFIRMATION="interactive-explicit-wipe"
+        ;;
+      "")
+        DESTRUCTIVE_CONFIRMATION="interactive-timeout-default-wipe"
+        ;;
+      *)
+        DESTRUCTIVE_CONFIRMATION="interactive-default-wipe"
+        ;;
+    esac
+  else
+    DESTRUCTIVE_CONFIRMATION="noninteractive-default-wipe"
+  fi
+fi
 
 mkdir -p "$(dirname "$OUT")"
 {
@@ -293,6 +435,7 @@ echo "  interactiveTTY=$INTERACTIVE_TTY"
 echo "  selectionSource = $SELECTION_SOURCE"
 echo "  originalCandidateCount = $ORIGINAL_DISK_COUNT"
 echo "  filteredCandidateCount = $DISK_COUNT"
+echo "  occupancyFilterApplied = $OCCUPANCY_FILTER_APPLIED"
 if [ -n "$INSTALL_DISK_FILTER" ]; then
   echo "  diskFilter = $INSTALL_DISK_FILTER"
 fi
@@ -303,6 +446,19 @@ echo "  diskRealPath = $DISK_REAL"
 echo "  diskClass = $DISK_CLASS"
 echo "  diskSize = $DISK_SIZE"
 echo "  diskModel = $DISK_MODEL"
+echo "  diskOccupied = $DISK_OCCUPIED"
+echo "  rootBackingDisk = $DISK_ROOT_BACKING"
+if [ -n "$DISK_OCCUPANCY_REASONS" ]; then
+  echo "  occupiedBecause = $DISK_OCCUPANCY_REASONS"
+fi
+if [ -n "$DISK_MOUNT_SUMMARY" ]; then
+  echo "  mountSummary = $DISK_MOUNT_SUMMARY"
+fi
+if [ -n "$DISK_HOLDER_SUMMARY" ]; then
+  echo "  holderSummary = $DISK_HOLDER_SUMMARY"
+fi
+echo "  destructiveConfirmation = $DESTRUCTIVE_CONFIRMATION"
+echo "  DATA_DESTRUCTION_WARNING=ALL_DATA_ON_SELECTED_DISK_WILL_BE_DESTROYED"
 if [ -n "$CAMERA" ]; then
   echo "  cameraDevicePath = $CAMERA"
 else
