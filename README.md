@@ -38,9 +38,15 @@ hosts/honor-magicbook-x16-pro/local-device-paths.nix
 
 а потом сама запускает `nixos-anywhere`.
 
-В логах скрипт явно печатает `AUTOSELECTED` / `USERSELECTED` и `selectionSource`,
-чтобы было видно, диск был выбран автоматически, через интерактивное меню или
-через явный override.
+В логах скрипт явно печатает `AUTOSELECTED` / `USERSELECTED`, `interactiveTTY`
+и `selectionSource`, чтобы было видно, диск был выбран автоматически,
+через интерактивное меню, через env-based выбор или через явный override.
+
+Для headless и серверных сценариев скрипт не должен зависать в ожидании ввода:
+если TTY нет или таймаут вышел, он автоматически выбирает лучший кандидат по
+приоритету `NVMe > SATA SSD > прочий SSD > HDD`. Для сложных многодисковых
+конфигураций можно дополнительно задать `INSTALL_DISK_FILTER` и
+`INSTALL_DISK_INDEX`.
 
 Файл нужен, чтобы не хардкодить `diskDevice` и `cameraDevicePath` в tracked-конфиге.
 Для install-диска здесь используется **`/dev/disk/by-id`**, а не `UUID`, потому что

@@ -5,9 +5,12 @@ HOST="${1:-}"
 OUT="${2:-hosts/honor-magicbook-x16-pro/local-device-paths.nix}"
 DISK_OVERRIDE="${3:-}"
 CAMERA_OVERRIDE="${4:-}"
+INSTALL_DISK_FILTER="${INSTALL_DISK_FILTER:-}"
+INSTALL_DISK_INDEX="${INSTALL_DISK_INDEX:-}"
 
 if [ -z "$HOST" ]; then
   echo "usage: $0 <ssh-target> [output-file] [disk-by-id] [camera-by-id-or-by-path]" >&2
+  echo "env overrides: INSTALL_DISK_FILTER=<substring-or-class> INSTALL_DISK_INDEX=<n>" >&2
   exit 1
 fi
 
@@ -65,15 +68,19 @@ find_disk_by_id_any() {
 }
 
 candidate_lines() {
-  lsblk -dnpo PATH,TYPE,RM,ROTA,TRAN,SIZE,MODEL 2>/dev/null | awk '
-    $2 == "disk" && $3 == "0" && $5 != "usb" {
+  lsblk -dnpo PATH,TYPE,RM,RO,ROTA,TRAN,SIZE,MODEL 2>/dev/null | awk '
+    $2 == "disk" && $3 == "0" && $4 == "0" && $6 != "usb" {
       path = $1
-      rota = $4
-      tran = $5
-      size = $6
+      rota = $5
+      tran = $6
+      size = $7
       model = ""
-      for (i = 7; i <= NF; i++) {
-        model = model (i == 7 ? "" : " ") $i
+      for (i = 8; i <= NF; i++) {
+        model = model (i == 8 ? "" : " ") $i
+      }
+
+      if (path ~ /\/dev\/(loop|zram|ram|fd|sr|md|dm-)/) {
+        next
       }
 
       priority = 0
@@ -169,40 +176,89 @@ if [ -z "$DISK_LINES" ]; then
   exit 2
 fi
 
+ORIGINAL_DISK_COUNT=$(printf "%s\n" "$DISK_LINES" | sed '/^$/d' | wc -l)
+
+if [ -n "$INSTALL_DISK_FILTER" ] && [ -z "$DISK_OVERRIDE" ]; then
+  FILTERED_DISK_LINES=$(printf "%s\n" "$DISK_LINES" | awk -F'|' -v needle="$INSTALL_DISK_FILTER" '
+    BEGIN {
+      needle_l = tolower(needle)
+    }
+    {
+      line_l = tolower($0)
+      class_l = tolower($5)
+      model_l = tolower($7)
+      byid_l = tolower($3)
+      if (class_l == needle_l || index(line_l, needle_l) > 0 || index(model_l, needle_l) > 0 || index(byid_l, needle_l) > 0) {
+        print $0
+      }
+    }
+  ')
+
+  if [ -z "$FILTERED_DISK_LINES" ]; then
+    echo "INSTALL_DISK_FILTER=$INSTALL_DISK_FILTER did not match any install disk candidates on $HOST." >&2
+    exit 2
+  fi
+
+  DISK_LINES="$FILTERED_DISK_LINES"
+fi
+
 DISK_COUNT=$(printf "%s\n" "$DISK_LINES" | sed '/^$/d' | wc -l)
 SELECTED_LINE=$(printf "%s\n" "$DISK_LINES" | sed -n '1p')
 AUTO_SELECTED=1
 USER_SELECTED=0
+INTERACTIVE_TTY=0
 SELECTION_SOURCE="single-candidate"
 
+if [ -t 0 ] && [ -t 1 ] && [ -r /dev/tty ]; then
+  INTERACTIVE_TTY=1
+fi
+
 if [ "$DISK_COUNT" -gt 1 ]; then
-  SELECTION_SOURCE="auto-first-candidate"
+  if [ "$INTERACTIVE_TTY" -eq 1 ]; then
+    SELECTION_SOURCE="auto-timeout-or-default"
+  else
+    SELECTION_SOURCE="auto-noninteractive"
+  fi
 fi
 
 if [ -n "$DISK_OVERRIDE" ]; then
   AUTO_SELECTED=0
   USER_SELECTED=1
   SELECTION_SOURCE="explicit-override"
-elif [ "$DISK_COUNT" -gt 1 ]; then
-  if [ -t 0 ] && [ -t 1 ] && [ -r /dev/tty ]; then
-    echo "Multiple install disk candidates found on $HOST:" > /dev/tty
-    n=1
-    printf "%s\n" "$DISK_LINES" | while IFS='|' read -r _ priority byid path class size model; do
-      printf "  [%s] by-id=%s | path=%s | class=%s | size=%s | model=%s | priority=%s\n" "$n" "$byid" "$path" "$class" "$size" "$model" "$priority" > /dev/tty
-      n=$((n + 1))
-    done
-    printf "Select disk number [1] within 20s, or wait for auto-select: " > /dev/tty
+elif [ -n "$INSTALL_DISK_INDEX" ]; then
+  if ! printf "%s" "$INSTALL_DISK_INDEX" | grep -Eq '^[1-9][0-9]*$'; then
+    echo "INSTALL_DISK_INDEX must be a positive integer starting from 1." >&2
+    exit 2
+  fi
 
-    CHOICE=$(timeout 20 sh -c 'IFS= read -r ans < /dev/tty && printf "%s" "$ans"' 2>/dev/null || true)
+  PICKED=$(printf "%s\n" "$DISK_LINES" | sed -n "${INSTALL_DISK_INDEX}p")
+  if [ -z "$PICKED" ]; then
+    echo "INSTALL_DISK_INDEX=$INSTALL_DISK_INDEX is out of range for $DISK_COUNT candidate(s)." >&2
+    exit 2
+  fi
 
-    if [ -n "$CHOICE" ] && printf "%s" "$CHOICE" | grep -Eq '^[0-9]+$'; then
-      PICKED=$(printf "%s\n" "$DISK_LINES" | sed -n "${CHOICE}p")
-      if [ -n "$PICKED" ]; then
-        SELECTED_LINE="$PICKED"
-        AUTO_SELECTED=0
-        USER_SELECTED=1
-        SELECTION_SOURCE="interactive-menu"
-      fi
+  SELECTED_LINE="$PICKED"
+  AUTO_SELECTED=0
+  USER_SELECTED=1
+  SELECTION_SOURCE="env-disk-index"
+elif [ "$DISK_COUNT" -gt 1 ] && [ "$INTERACTIVE_TTY" -eq 1 ]; then
+  echo "Multiple install disk candidates found on $HOST:" > /dev/tty
+  n=1
+  printf "%s\n" "$DISK_LINES" | while IFS='|' read -r _ priority byid path class size model; do
+    printf "  [%s] by-id=%s | path=%s | class=%s | size=%s | model=%s | priority=%s\n" "$n" "$byid" "$path" "$class" "$size" "$model" "$priority" > /dev/tty
+    n=$((n + 1))
+  done
+  printf "Select disk number [1] within 20s, or wait for auto-select: " > /dev/tty
+
+  CHOICE=$(timeout 20 sh -c 'IFS= read -r ans < /dev/tty && printf "%s" "$ans"' 2>/dev/null || true)
+
+  if [ -n "$CHOICE" ] && printf "%s" "$CHOICE" | grep -Eq '^[0-9]+$'; then
+    PICKED=$(printf "%s\n" "$DISK_LINES" | sed -n "${CHOICE}p")
+    if [ -n "$PICKED" ]; then
+      SELECTED_LINE="$PICKED"
+      AUTO_SELECTED=0
+      USER_SELECTED=1
+      SELECTION_SOURCE="interactive-menu"
     fi
   fi
 fi
@@ -233,7 +289,16 @@ else
 fi
 echo "  AUTOSELECTED=$AUTO_SELECTED"
 echo "  USERSELECTED=$USER_SELECTED"
+echo "  interactiveTTY=$INTERACTIVE_TTY"
 echo "  selectionSource = $SELECTION_SOURCE"
+echo "  originalCandidateCount = $ORIGINAL_DISK_COUNT"
+echo "  filteredCandidateCount = $DISK_COUNT"
+if [ -n "$INSTALL_DISK_FILTER" ]; then
+  echo "  diskFilter = $INSTALL_DISK_FILTER"
+fi
+if [ -n "$INSTALL_DISK_INDEX" ]; then
+  echo "  diskIndex = $INSTALL_DISK_INDEX"
+fi
 echo "  diskRealPath = $DISK_REAL"
 echo "  diskClass = $DISK_CLASS"
 echo "  diskSize = $DISK_SIZE"

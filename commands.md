@@ -23,21 +23,27 @@ nix run .#install-honor-magicbook -- wkubearnament@<target-host>
 
 1. заходит по `SSH` на целевой host
 2. консервативно сортирует install-диски по приоритету `NVMe > SATA SSD > прочий SSD > HDD`
-3. если найдено несколько кандидатов — в обычном TTY предлагает **текстовый выбор без графики**
-4. если пользователь не ответил за 20 секунд или сессия неинтерактивная — автоматически берёт **первый кандидат**
-5. первый кандидат — это самый быстрый класс диска, а внутри класса самый ранний device order
-6. пытается найти стабильный `cameraDevicePath` через `/dev/v4l/by-id`, затем `by-path`
-7. если камера не найдена — **не падает**, а просто не пишет `cameraDevicePath`
-8. пишет в лог, как именно был выбран диск: `AUTOSELECTED=1` / `USERSELECTED=1`
-9. пишет локальный файл
+3. жёстко фильтрует только подходящие whole-disk кандидаты и игнорирует `usb`, `loop`, `zram`, `md`, `dm-*`, `sr*`
+4. если найдено несколько кандидатов — в обычном TTY предлагает **текстовый выбор без графики**
+5. если пользователь не ответил за 20 секунд или сессия неинтерактивная/headless — автоматически берёт **первый кандидат**
+6. первый кандидат — это самый быстрый класс диска, а внутри класса самый ранний device order
+7. пытается найти стабильный `cameraDevicePath` через `/dev/v4l/by-id`, затем `by-path`
+8. если камера не найдена — **не падает**, а просто не пишет `cameraDevicePath`
+9. пишет в лог, как именно был выбран диск: `AUTOSELECTED=1` / `USERSELECTED=1`
+10. пишет локальный файл
    `hosts/honor-magicbook-x16-pro/local-device-paths.nix`
-10. запускает `nixos-anywhere` уже с корректным flake-конфигом
+11. запускает `nixos-anywhere` уже с корректным flake-конфигом
 
 Если у тебя многодисковая машина и ты не хочешь полагаться на автоселект,
 передай нужный `by-id` явно через override.
 
 `selectionSource` в выводе покажет, был ли это `explicit-override`,
-`interactive-menu`, `single-candidate` или `auto-first-candidate`.
+`env-disk-index`, `interactive-menu`, `single-candidate`,
+`auto-timeout-or-default` или `auto-noninteractive`.
+
+Скрипт также печатает `interactiveTTY`, `originalCandidateCount` и
+`filteredCandidateCount`, чтобы в логах было видно, почему был выбран именно
+этот диск.
 
 ### Auto-detect only
 
@@ -56,6 +62,18 @@ nix run .#fetch-target-device-paths -- \
   /dev/disk/by-id/nvme-... \
   /dev/v4l/by-id/...-video-index0
 ```
+
+Если нужен неинтерактивный, но управляемый выбор в сложной многодисковой машине,
+используй env-переменные:
+
+```bash
+INSTALL_DISK_FILTER=nvme nix run .#fetch-target-device-paths -- wkubearnament@<target-host>
+INSTALL_DISK_FILTER=Samsung INSTALL_DISK_INDEX=2 nix run .#fetch-target-device-paths -- wkubearnament@<target-host>
+```
+
+`INSTALL_DISK_FILTER` матчит класс диска (`nvme`, `sata-ssd`, `solid-state`, `hdd`)
+или подстроку в `by-id` / модели.
+`INSTALL_DISK_INDEX` — это номер кандидата, начиная с `1`, уже после фильтрации.
 
 ### Low-level fallback
 

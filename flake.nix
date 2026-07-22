@@ -38,7 +38,7 @@
 
     fetchTargetDevicePaths = pkgs.writeShellApplication {
       name = "fetch-target-device-paths";
-      runtimeInputs = with pkgs; [ coreutils findutils gawk gnused openssh util-linux ];
+      runtimeInputs = with pkgs; [ coreutils findutils gawk gnugrep gnused openssh util-linux ];
       text = builtins.readFile ./scripts/fetch-target-device-paths.sh;
     };
 
