@@ -1,0 +1,51 @@
+{ lib, pkgs, inputs, ... }:
+{
+  imports = [
+    (inputs.nixos-hardware + "/common/cpu/amd")
+    (inputs.nixos-hardware + "/common/cpu/amd/pstate.nix")
+    (inputs.nixos-hardware + "/common/gpu/amd")
+    (inputs.nixos-hardware + "/common/pc/laptop")
+    (inputs.nixos-hardware + "/common/pc/ssd")
+  ];
+
+  boot.initrd.availableKernelModules = [
+    "nvme"
+    "xhci_pci"
+    "thunderbolt"
+    "usb_storage"
+    "sd_mod"
+    "rtsx_pci_sdmmc"
+  ];
+
+  boot.kernelModules = [
+    "kvm-amd"
+    "huawei_wmi"
+  ];
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+
+  hardware.enableRedistributableFirmware = true;
+  services.fwupd.enable = true;
+  services.power-profiles-daemon.enable = true;
+
+  nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
+
+  # Honor MagicBook X16 Pro BRN-H76 is an AMD Phoenix laptop
+  # (Ryzen 7 7840HS / Radeon 780M, Zen 4).
+  # znver4 tuning is intentionally disabled by default because it forces
+  # large local rebuilds and still has upstream build failures for some
+  # packages on recent nixpkgs / nixos-unstable revisions.
+  #
+  # nix.settings.system-features = [
+  #   "benchmark"
+  #   "big-parallel"
+  #   "gccarch-znver4"
+  #   "kvm"
+  #   "nixos-test"
+  # ];
+  #
+  # nixpkgs.hostPlatform = {
+  #   system = "x86_64-linux";
+  #   gcc.arch = "znver4";
+  #   gcc.tune = "znver4";
+  # };
+}
