@@ -357,7 +357,8 @@ elif [ "$DISK_COUNT" -gt 1 ] && [ "$INTERACTIVE_TTY" -eq 1 ]; then
   done
   printf "Select disk number [1] within 20s, or wait for auto-select: " > /dev/tty
 
-  CHOICE=$(timeout 20 sh -c "IFS= read -r ans < /dev/tty && printf '%s' \"\$ans\"" 2>/dev/null || true)
+  CHOICE=""
+  IFS= read -r -t 20 CHOICE < /dev/tty || true
 
   if [ -n "$CHOICE" ] && printf "%s" "$CHOICE" | grep -Eq '^[0-9]+$'; then
     PICKED=$(printf "%s\n" "$DISK_LINES" | sed -n "${CHOICE}p")
@@ -397,7 +398,8 @@ if [ "$DISK_OCCUPIED" = "1" ]; then
     fi
     printf "Type 'NO' within 20s to abort. Default action is WIPE and continue: " > /dev/tty
 
-    WIPE_REPLY=$(timeout 20 sh -c "IFS= read -r ans < /dev/tty && printf '%s' \"\$ans\"" 2>/dev/null || true)
+    WIPE_REPLY=""
+    IFS= read -r -t 20 WIPE_REPLY < /dev/tty || true
     WIPE_REPLY_LC=$(printf "%s" "$WIPE_REPLY" | tr '[:upper:]' '[:lower:]')
 
     case "$WIPE_REPLY_LC" in
