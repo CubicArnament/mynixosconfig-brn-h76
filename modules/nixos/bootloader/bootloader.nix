@@ -43,7 +43,7 @@ let
   '';
 in
 {
-  boot.supportedFilesystems = [ "btrfs" "vfat" ];
+  boot.supportedFilesystems = { btrfs = true; vfat = true; };
 
   boot.loader = {
     efi.canTouchEfiVariables = true;
@@ -52,8 +52,6 @@ in
       enable = true;
       device = "nodev";
       efiSupport = true;
-      btrfsSupport = true;
-      useOSProber = true;
       gfxmodeEfi = "1920x1080,auto";
       gfxpayloadEfi = "keep";
       timeout = 5;

@@ -1,6 +1,7 @@
 { pkgs, ... }:
 {
   home.packages = with pkgs; [
-    zed-editor
+    helm
+    kubectl
   ];
 }

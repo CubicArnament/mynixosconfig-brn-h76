@@ -6,7 +6,7 @@ let
   # - Flatseal: "com.github.tchx84.Flatseal"
   # - Telegram: "org.telegram.desktop"
   flatpakPackages = [
-    # "com.usebottles.bottles"
+    "com.usebottles.bottles"
   ];
 in
 {

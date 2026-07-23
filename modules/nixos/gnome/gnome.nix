@@ -1,4 +1,7 @@
-{ pkgs, ... }:
+{ pkgs, lib, config, ... }:
+let
+  cfg = config.machine;
+in
 {
   services.xserver.enable = true;
   services.displayManager.gdm.enable = true;
@@ -19,18 +22,16 @@
     gnomeExtensions.touchpad-gesture-customization
   ];
 
-  # Huawei/Honor hotkeys приходят через huawei_wmi.
-  # Яркость/громкость/микрофон GNOME обрабатывает нативно, а эти hwdb
-  # mappings страхуют дополнительные Honor-специфичные клавиши до тех пор,
-  # пока конкретная ревизия ноутбука не совпадёт с in-tree keymap ядра.
-  services.udev.extraHwdb = ''
+  # Huawei/Honor hotkeys — только на физическом Honor/Huawei железе.
+  # В VM huawei_wmi не загрузится, но лишний hwdb/udev мусор ни к чему.
+  services.udev.extraHwdb = lib.mkIf (!cfg.isVm) ''
     evdev:name:Huawei WMI hotkeys:*
       KEYBOARD_KEY_0288=camera
       KEYBOARD_KEY_028b=notification-center
       KEYBOARD_KEY_028e=printscreen
   '';
 
-  services.udev.extraRules = ''
+  services.udev.extraRules = lib.mkIf (!cfg.isVm) ''
     ACTION=="add|change", SUBSYSTEM=="input", ATTRS{name}=="Huawei WMI hotkeys", ENV{ID_INPUT}="1", ENV{ID_INPUT_KEYBOARD}="1"
   '';
 }

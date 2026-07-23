@@ -1,4 +1,7 @@
-{ pkgs, ... }:
+{ pkgs, lib, config, ... }:
+let
+  cfg = config.machine;
+in
 {
   virtualisation.libvirtd = {
     enable = true;
@@ -6,7 +9,9 @@
       package = pkgs.qemu_kvm;
       swtpm.enable = true;
       vhostUserPackages = [ pkgs.virtiofsd ];
-      verbatimConfig = ''
+      # gl=1 требует GPU passthrough или virgl на хосте.
+      # В VM без passthrough вызовет падение гостей — отключаем.
+      verbatimConfig = lib.mkIf (!cfg.isVm) ''
         namespaces = []
         gl = 1
       '';
@@ -19,13 +24,7 @@
     dnsmasq
   ];
 
-  services.k3s = {
-    enable = true;
-    role = "server";
-  };
-
   networking.firewall = {
     trustedInterfaces = [ "virbr0" ];
-    allowedTCPPorts = [ 6443 ];
   };
 }

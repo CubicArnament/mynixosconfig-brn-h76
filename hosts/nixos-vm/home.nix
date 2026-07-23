@@ -4,8 +4,7 @@
     (import ../../dev/development.nix).homeModule
     ../../modules/home/fish/fish.nix
     ../../modules/home/gnome/gnome.nix
-    ../../modules/home/virtualization/virtualization.nix
-    # ../../modules/home/cncf/cncf.nix  # helm + kubectl; включи если нужен cncf-тулинг
+    # виртуализация внутри VM обычно не нужна
     ../../modules/home/packages/user/user-pkgs.nix
   ];
 
@@ -17,6 +16,5 @@
   };
 
   programs.home-manager.enable = true;
-
   programs.git.enable = true;
 }

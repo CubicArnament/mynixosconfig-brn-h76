@@ -27,13 +27,46 @@
   outputs = inputs@{ self, nixpkgs, disko, home-manager, nix-flatpak, ... }: let
     system = "x86_64-linux";
     pkgs = import nixpkgs { inherit system; };
-    hostName = "honor-magicbook-x16-pro";
-    hostDir = ./hosts/honor-magicbook-x16-pro;
-    user = import (hostDir + "/user.nix") { inherit pkgs; };
-    localDevicePathsPath = hostDir + "/local-device-paths.nix";
-    localDevicePaths = if builtins.pathExists localDevicePathsPath then import localDevicePathsPath else { };
-    localDevicePathsRel = "hosts/${hostName}/local-device-paths.nix";
+
+    # Общий user для всех хостов — имя/shell/home живут в user.nix
+    user = import ./hosts/honor-magicbook-x16-pro/user.nix { inherit pkgs; };
     userName = user.name;
+
+    # Хелпер для сборки nixosConfiguration.
+    # localDevicePaths — опциональный атрибутсет из local-device-paths.nix
+    # (diskDevice, cameraDevicePath). Передаётся через specialArgs, чтобы
+    # disko.nix и howdy.nix могли получить значения без хардкода в repo.
+    mkHost = { hostName, extraModules ? [], localDevicePaths ? {} }:
+      nixpkgs.lib.nixosSystem {
+        inherit system;
+        specialArgs = {
+          inherit inputs hostName user userName;
+        } // localDevicePaths;
+        modules = [
+          disko.nixosModules.disko
+          home-manager.nixosModules.home-manager
+          nix-flatpak.nixosModules.nix-flatpak
+          ./hosts/${hostName}/configuration.nix
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.extraSpecialArgs = {
+              inherit inputs hostName user userName;
+            } // localDevicePaths;
+            home-manager.users.${user.name} = import ./hosts/${hostName}/home.nix;
+          }
+        ] ++ extraModules;
+      };
+
+    # Honor MagicBook — основной хост
+    honorHostName = "honor-magicbook-x16-pro";
+    honorHostDir = ./hosts/${honorHostName};
+    honorLocalDevicePathsFile = honorHostDir + "/local-device-paths.nix";
+    honorLocalDevicePaths =
+      if builtins.pathExists honorLocalDevicePathsFile
+      then import honorLocalDevicePathsFile
+      else { };
+    honorLocalDevicePathsRel = "hosts/${honorHostName}/local-device-paths.nix";
 
     fetchTargetDevicePaths = pkgs.writeShellApplication {
       name = "fetch-target-device-paths";
@@ -56,10 +89,10 @@
         REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
         cd "$REPO_ROOT"
 
-        ${fetchTargetDevicePaths}/bin/fetch-target-device-paths "$HOST" "${localDevicePathsRel}"
+        ${fetchTargetDevicePaths}/bin/fetch-target-device-paths "$HOST" "${honorLocalDevicePathsRel}"
 
         nix --extra-experimental-features "nix-command flakes" run github:nix-community/nixos-anywhere -- \
-          --flake .#${hostName} \
+          --flake .#${honorHostName} \
           "$HOST"
       '';
     };
@@ -81,27 +114,20 @@
       default = self.apps.${system}.install-honor-magicbook;
     };
 
-    nixosConfigurations.${hostName} = nixpkgs.lib.nixosSystem {
-      inherit system;
+    nixosConfigurations = {
+      # Основной хост — Honor MagicBook X16 Pro BRN-H76
+      ${honorHostName} = mkHost {
+        hostName = honorHostName;
+        localDevicePaths = honorLocalDevicePaths;
+      };
 
-      specialArgs = {
-        inherit inputs hostName user userName;
-      } // localDevicePaths;
-
-      modules = [
-        disko.nixosModules.disko
-        home-manager.nixosModules.home-manager
-        nix-flatpak.nixosModules.nix-flatpak
-        ./hosts/${hostName}/configuration.nix
-        {
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.extraSpecialArgs = {
-            inherit inputs hostName user userName;
-          } // localDevicePaths;
-          home-manager.users.${user.name} = import ./hosts/${hostName}/home.nix;
-        }
-      ];
+      # VM для тестирования установки и конфига без физического железа.
+      # Использует те же модули, но с machine.isVm = true —
+      # отключает AMD/Huawei-специфику, howdy, gl passthrough, s2idle.
+      # Запуск: nixos-rebuild switch --flake .#nixos-vm
+      nixos-vm = mkHost {
+        hostName = "nixos-vm";
+      };
     };
   };
 }
