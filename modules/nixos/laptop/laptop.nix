@@ -6,15 +6,9 @@ let
   fnLockDefault = 1;
 in
 {
-  # powerManagement.enable позволяет NixOS применять правила CPU при resume/suspend.
-  # cpuFreqGovernor намеренно НЕ выставляется: при amd_pstate=active (nixos-hardware/common/cpu/amd/pstate.nix,
-  # ядро >= 6.3) драйвер работает в EPP-режиме (HWP hint), а power-profiles-daemon
-  # управляет энергопрофилем через platform_profile / EPP напрямую.
-  # Принудительный governor schedutil конфликтует с PPD и сбрасывает EPP-настройки.
-  powerManagement = lib.mkIf (!cfg.isVm) {
-    enable = true;
-    # cpuFreqGovernor не задаём: amd_pstate=active + PPD управляют этим сами
-  };
+  # powerManagement живёт в modules/nixos/power/power.nix.
+  # cpuFreqGovernor намеренно не выставляется нигде: при amd_pstate=active (kernel >= 6.3)
+  # PPD управляет EPP/platform_profile напрямую — governor не нужен и конфликтует с ним.
 
   # AMD-специфичные настройки.
   # Примечание: amd_pstate уже выставляется nixos-hardware common/cpu/amd/pstate.nix
