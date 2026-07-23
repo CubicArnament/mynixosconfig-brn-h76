@@ -33,7 +33,14 @@
 Zero-touch сценарий установки теперь завязан на flake app:
 
 ```bash
-nix run .#install-honor-magicbook -- wkubearnament@<target-host>
+nix --extra-experimental-features "nix-command flakes" run .#install-honor-magicbook -- wkubearnament@<target-host>
+```
+
+В live/minimal среде `nix-command` и `flakes` нередко выключены по умолчанию,
+поэтому либо используй эту полную форму, либо заранее выстави:
+
+```bash
+export NIX_CONFIG="experimental-features = nix-command flakes"
 ```
 
 Эта команда сначала автоматически генерирует локальный файл устройств:
@@ -81,6 +88,7 @@ hosts/honor-magicbook-x16-pro/local-device-paths.nix
 - face auth вынесен в отдельный `Howdy`-модуль
 - встроенная веб-камера предполагается как стандартная `UVC` (`uvcvideo`)
 - для `Honor/Huawei` hotkeys используется `huawei_wmi` + `hwdb` mappings
+- Honor/Huawei-специфичные WMI tweaks теперь не форсятся на нерелевантном железе и не должны мешать VM-тестам
 
 Имя пользователя, shell и домашняя директория теперь вынесены в
 `hosts/honor-magicbook-x16-pro/user.nix`, чтобы не править это по нескольким

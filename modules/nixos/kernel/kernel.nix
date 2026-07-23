@@ -19,8 +19,9 @@
     "acpi.ec_no_wakeup=1"
   ];
 
-  boot.kernelModules = [ "huawei_wmi" ];
-
+  # Do not force-load huawei_wmi on unrelated hardware or in VMs.
+  # If the Honor/Huawei platform device exists, the module can still autoload
+  # and will pick up this parameter.
   boot.extraModprobeConfig = ''
     options huawei_wmi report_brightness=1
   '';

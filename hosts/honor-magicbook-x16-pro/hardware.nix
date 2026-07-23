@@ -22,7 +22,6 @@
   # Keeping uvcvideo explicit here makes the intent clear for Howdy/webcam auth.
   boot.kernelModules = [
     "kvm-amd"
-    "huawei_wmi"
     "uvcvideo"
   ];
   boot.kernelPackages = pkgs.linuxPackages_latest;

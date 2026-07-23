@@ -21,7 +21,31 @@
 > `hosts/honor-magicbook-x16-pro/user.nix`, если ты его менял.
 
 ```bash
+nix --extra-experimental-features "nix-command flakes" run .#install-honor-magicbook -- wkubearnament@<target-host>
+```
+
+Если не хочешь каждый раз дописывать флаги в live-среде:
+
+```bash
+export NIX_CONFIG="experimental-features = nix-command flakes"
+```
+
+После этого можно использовать короткую форму:
+
+```bash
 nix run .#install-honor-magicbook -- wkubearnament@<target-host>
+```
+
+Важно:
+
+- после `--` нужен **пробел**, то есть `-- wkubearnament@...`, а не `--wkubearnament@...`
+- в live/minimal среде `nix-command` и `flakes` часто не включены по умолчанию
+- `localhost` для этого сценария тоже идёт через `SSH`, так что `sshd` должен быть запущен
+- если ты тестируешь прямо внутри live ISO/VM, пользователь для SSH чаще всего будет `nixos`, а не твой будущий `wkubearnament`
+- для локального теста в VM обычно нужен такой формат:
+
+```bash
+nix --extra-experimental-features "nix-command flakes" run .#install-honor-magicbook -- nixos@localhost
 ```
 
 Что делает app:
@@ -59,7 +83,7 @@ nix run .#install-honor-magicbook -- wkubearnament@<target-host>
 Если хочешь только сгенерировать пути устройств без установки:
 
 ```bash
-nix run .#fetch-target-device-paths -- wkubearnament@<target-host>
+nix --extra-experimental-features "nix-command flakes" run .#fetch-target-device-paths -- wkubearnament@<target-host>
 ```
 
 Если нужно явно переопределить диск или камеру:
@@ -97,7 +121,7 @@ INSTALL_DISK_FILTER=root nix run .#fetch-target-device-paths -- wkubearnament@<t
 до локальной оценки flake заранее узнать remote `disk by-id`.
 
 ```bash
-nix run github:nix-community/nixos-anywhere -- \
+nix --extra-experimental-features "nix-command flakes" run github:nix-community/nixos-anywhere -- \
   --flake .#honor-magicbook-x16-pro \
   wkubearnament@<target-host>
 ```

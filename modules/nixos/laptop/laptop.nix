@@ -7,7 +7,6 @@ in
 {
   boot.kernelModules = [
     "amd_pstate"
-    "huawei_wmi"
   ];
 
   boot.kernelParams = [
@@ -31,9 +30,9 @@ in
 
   systemd.services.huawei-wmi-apply = {
     description = "Apply Honor Huawei WMI battery and Fn-lock settings";
-    wantedBy = [ "multi-user.target" ];
     wants = [ "systemd-udev-settle.service" ];
     after = [ "systemd-udev-settle.service" ];
+    unitConfig.ConditionPathExists = "/sys/devices/platform/huawei-wmi";
     serviceConfig.Type = "oneshot";
     script = ''
       set -eu

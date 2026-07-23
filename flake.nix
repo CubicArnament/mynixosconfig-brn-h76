@@ -48,7 +48,7 @@
       text = ''
         set -eu
 
-        HOST="${1:-}"
+        HOST="''${1:-}"
         if [ -z "$HOST" ]; then
           echo "usage: install-honor-magicbook <ssh-target>" >&2
           exit 1
@@ -59,7 +59,7 @@
 
         ${fetchTargetDevicePaths}/bin/fetch-target-device-paths "$HOST" "${localDevicePathsRel}"
 
-        nix run github:nix-community/nixos-anywhere -- \
+        nix --extra-experimental-features "nix-command flakes" run github:nix-community/nixos-anywhere -- \
           --flake .#${hostName} \
           "$HOST"
       '';
