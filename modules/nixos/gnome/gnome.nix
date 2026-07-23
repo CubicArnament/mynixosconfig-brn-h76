@@ -3,9 +3,31 @@ let
   cfg = config.machine;
 in
 {
-  services.xserver.enable = true;
-  services.displayManager.gdm.enable = true;
-  services.desktopManager.gnome.enable = true;
+  services = {
+    xserver = {
+      enable = true;
+    };
+    displayManager = {
+      gdm.enable = true;
+    };
+    desktopManager = {
+      gnome.enable = true;
+    };
+
+    # Huawei/Honor hotkeys — только на физическом Honor/Huawei железе.
+    udev = lib.mkIf (!cfg.isVm) {
+      extraHwdb = ''
+        evdev:name:Huawei WMI hotkeys:*
+          KEYBOARD_KEY_0288=camera
+          KEYBOARD_KEY_028b=notification-center
+          KEYBOARD_KEY_028e=printscreen
+      '';
+
+      extraRules = ''
+        ACTION=="add|change", SUBSYSTEM=="input", ATTRS{name}=="Huawei WMI hotkeys", ENV{ID_INPUT}="1", ENV{ID_INPUT_KEYBOARD}="1"
+      '';
+    };
+  };
 
   programs.dconf.enable = true;
 
@@ -21,17 +43,4 @@ in
     gnomeExtensions.user-themes
     gnomeExtensions.touchpad-gesture-customization
   ];
-
-  # Huawei/Honor hotkeys — только на физическом Honor/Huawei железе.
-  # В VM huawei_wmi не загрузится, но лишний hwdb/udev мусор ни к чему.
-  services.udev.extraHwdb = lib.mkIf (!cfg.isVm) ''
-    evdev:name:Huawei WMI hotkeys:*
-      KEYBOARD_KEY_0288=camera
-      KEYBOARD_KEY_028b=notification-center
-      KEYBOARD_KEY_028e=printscreen
-  '';
-
-  services.udev.extraRules = lib.mkIf (!cfg.isVm) ''
-    ACTION=="add|change", SUBSYSTEM=="input", ATTRS{name}=="Huawei WMI hotkeys", ENV{ID_INPUT}="1", ENV{ID_INPUT_KEYBOARD}="1"
-  '';
 }

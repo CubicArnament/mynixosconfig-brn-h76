@@ -28,15 +28,16 @@
   #   machine.isVm = lib.mkForce false;
   #   machine.cpuVendor = lib.mkForce "amd";
 
-  networking.hostName = hostName;
-  networking.networkmanager.enable = true;
+  networking = {
+    hostName = hostName;
+    networkmanager.enable = true;
+  };
 
   nix = {
     settings = {
       experimental-features = [ "nix-command" "flakes" ];
       auto-optimise-store = true;
     };
-
     gc = {
       automatic = true;
       dates = "weekly";
@@ -45,7 +46,6 @@
   };
 
   nixpkgs.config = {
-    # Allow proprietary packages globally for this host.
     allowUnfree = true;
     allowUnfreePredicate = _: true;
   };
@@ -54,31 +54,42 @@
   i18n.defaultLocale = "ru_RU.UTF-8";
 
   console.useXkbConfig = true;
-  services.xserver.xkb = {
-    layout = "us,ru";
-    options = "grp:alt_shift_toggle";
+
+  services = {
+    xserver = {
+      xkb = {
+        layout = "us,ru";
+        options = "grp:alt_shift_toggle";
+      };
+    };
+
+    openssh = {
+      enable = true;
+    };
+
+    pipewire = {
+      enable = true;
+      pulse.enable = true;
+      alsa = {
+        enable = true;
+        support32Bit = true;
+      };
+      wireplumber.enable = true;
+    };
   };
 
   users.users.${user.name} = {
     isNormalUser = true;
-    description = user.description;
-    extraGroups = user.extraGroups;
+    inherit (user) description extraGroups;
     shell = user.shellPackage;
     home = user.homeDirectory;
   };
 
-  services.openssh.enable = true;
-
   security.rtkit.enable = true;
-  services.pipewire = {
-    enable = true;
-    pulse.enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    wireplumber.enable = true;
-  };
 
-  hardware.bluetooth.enable = true;
+  hardware = {
+    bluetooth.enable = true;
+  };
 
   # Wayland screen sharing for OBS/Discord/Electron apps depends on
   # PipeWire + xdg-desktop-portal. GNOME's portal backend should be the
@@ -90,11 +101,7 @@
       pkgs.xdg-desktop-portal-gnome
       pkgs.xdg-desktop-portal-gtk
     ];
-    config = {
-      common = {
-        default = [ "gnome" "gtk" ];
-      };
-    };
+    config.common.default = [ "gnome" "gtk" ];
   };
 
   system.stateVersion = "26.05";

@@ -239,10 +239,19 @@ printf "CAMERA|%s\n" "$(pick_camera "$2")"
 REMOTE_EOF
 )
 
+# For localhost: run detection directly without SSH.
+# For remote hosts: connect via SSH.
 # shellcheck disable=SC2029
 # Intentional: DISK_OVERRIDE/CAMERA_OVERRIDE are local args and must expand
 # on the client side before being sent to the remote shell as literals.
-RESULT=$(printf "%s\n" "$remote_detect" | ssh "$HOST" "sh -s -- '$DISK_OVERRIDE' '$CAMERA_OVERRIDE'")
+case "$HOST" in
+  localhost|127.0.0.1|::1)
+    RESULT=$(printf "%s\n" "$remote_detect" | sh -s -- "$DISK_OVERRIDE" "$CAMERA_OVERRIDE")
+    ;;
+  *)
+    RESULT=$(printf "%s\n" "$remote_detect" | ssh "$HOST" "sh -s -- '$DISK_OVERRIDE' '$CAMERA_OVERRIDE'")
+    ;;
+esac
 
 DISK_LINES=$(printf "%s\n" "$RESULT" | grep '^DISK|' || true)
 CAMERA=$(printf "%s\n" "$RESULT" | awk -F'|' '/^CAMERA\|/ { sub(/^CAMERA\|/, "", $0); print; exit }')

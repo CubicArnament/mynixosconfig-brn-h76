@@ -37,22 +37,23 @@
     # (diskDevice, cameraDevicePath). Передаётся через specialArgs, чтобы
     # disko.nix и howdy.nix могли получить значения без хардкода в repo.
     mkHost = { hostName, extraModules ? [], localDevicePaths ? {} }:
+      let
+        sharedArgs = { inherit inputs hostName user userName; } // localDevicePaths;
+      in
       nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = {
-          inherit inputs hostName user userName;
-        } // localDevicePaths;
+        specialArgs = sharedArgs;
         modules = [
           home-manager.nixosModules.home-manager
           nix-flatpak.nixosModules.nix-flatpak
           ./hosts/${hostName}/configuration.nix
           {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.extraSpecialArgs = {
-              inherit inputs hostName user userName;
-            } // localDevicePaths;
-            home-manager.users.${user.name} = import ./hosts/${hostName}/home.nix;
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              extraSpecialArgs = sharedArgs;
+              users.${user.name} = import ./hosts/${hostName}/home.nix;
+            };
           }
         ] ++ extraModules;
       };
@@ -81,7 +82,9 @@
 
         HOST="''${1:-}"
         if [ -z "$HOST" ]; then
-          echo "usage: install-honor-magicbook <ssh-target>" >&2
+          echo "usage: install-honor-magicbook <ssh-target|localhost>" >&2
+          echo "  localhost  — local install via disko + nixos-install (run from NixOS live ISO)" >&2
+          echo "  user@host  — remote install via nixos-anywhere over SSH" >&2
           exit 1
         fi
 
@@ -90,9 +93,28 @@
 
         ${fetchTargetDevicePaths}/bin/fetch-target-device-paths "$HOST" "${honorLocalDevicePathsRel}"
 
-        nix --extra-experimental-features "nix-command flakes" run github:nix-community/nixos-anywhere -- \
-          --flake .#${honorHostName} \
-          "$HOST"
+        case "$HOST" in
+          localhost|127.0.0.1|::1)
+            echo "Local install mode: running disko then nixos-install"
+
+            DISK_DEVICE=$(nix eval --raw .#nixosConfigurations.${honorHostName}.config.disko.devices.disk.main.device)
+
+            # Partition and format the disk via disko
+            nix --extra-experimental-features "nix-command flakes" run github:nix-community/disko -- \
+              --mode destroy,format,mount \
+              --flake .#${honorHostName}
+
+            # Install NixOS onto the freshly mounted filesystems
+            nixos-install \
+              --no-root-passwd \
+              --flake .#${honorHostName}
+            ;;
+          *)
+            nix --extra-experimental-features "nix-command flakes" run github:nix-community/nixos-anywhere -- \
+              --flake .#${honorHostName} \
+              "$HOST"
+            ;;
+        esac
       '';
     };
   in {
