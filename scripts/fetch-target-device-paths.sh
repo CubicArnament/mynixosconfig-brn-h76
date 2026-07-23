@@ -239,6 +239,9 @@ printf "CAMERA|%s\n" "$(pick_camera "$2")"
 REMOTE_EOF
 )
 
+# shellcheck disable=SC2029
+# Intentional: DISK_OVERRIDE/CAMERA_OVERRIDE are local args and must expand
+# on the client side before being sent to the remote shell as literals.
 RESULT=$(printf "%s\n" "$remote_detect" | ssh "$HOST" "sh -s -- '$DISK_OVERRIDE' '$CAMERA_OVERRIDE'")
 
 DISK_LINES=$(printf "%s\n" "$RESULT" | grep '^DISK|' || true)

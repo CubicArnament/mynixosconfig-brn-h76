@@ -19,10 +19,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nix-flatpak = {
-      url = "github:gmodena/nix-flatpak/?ref=v0.7.0";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # nix-flatpak v0.7.0 has no declared inputs of its own, so there is
+    # nothing here to override with `follows`.
+    nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=v0.7.0";
   };
 
   outputs = inputs@{ self, nixpkgs, disko, home-manager, nix-flatpak, ... }: let
