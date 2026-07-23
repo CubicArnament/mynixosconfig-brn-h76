@@ -1,40 +1,5 @@
 # Commands
 
-## VM Install (nixos-vm)
-
-Конфиг `nixos-vm` не использует disko — диск разметить надо вручную **до** установки.
-Скрипт `vm-install-mount.sh` берёт это на себя:
-
-```bash
-run0 sh ./scripts/vm-install-mount.sh
-```
-
-Что делает скрипт:
-
-1. Сканирует разделы, ищет подходящие для установки (ext4 или btrfs, не swap, не vfat)
-2. Если кандидат один — монтирует автоматически
-3. Если кандидатов несколько — показывает список и просит выбрать цифрой
-4. Если ни одного нет — печатает инструкцию по `cfdisk` и выходит
-5. Монтирует системный раздел в `/mnt`, EFI раздел в `/mnt/boot`
-6. Запускает `nixos-generate-config --root /mnt`
-7. Запускает `nixos-install --flake .#nixos-vm --root /mnt`
-
-Посмотреть что найдёт без монтирования:
-
-```bash
-sh ./scripts/vm-install-mount.sh --dry-run
-```
-
-Если диск ещё не размечен, скрипт выведет инструкцию:
-
-```bash
-cfdisk /dev/vda          # или /dev/sda — смотри lsblk
-mkfs.vfat -F 32 /dev/vda1
-mkfs.ext4 /dev/vda2      # или mkfs.btrfs /dev/vda2
-```
-
-После разметки — снова запусти скрипт.
-
 ## NixOS Anywhere
 
 Запускать **с Linux-машины / live ISO**, не с Windows.
@@ -76,12 +41,6 @@ nix run .#install-honor-magicbook -- wkubearnament@<target-host>
 - после `--` нужен **пробел**, то есть `-- wkubearnament@...`, а не `--wkubearnament@...`
 - в live/minimal среде `nix-command` и `flakes` часто не включены по умолчанию
 - `localhost` для этого сценария тоже идёт через `SSH`, так что `sshd` должен быть запущен
-- если ты тестируешь прямо внутри live ISO/VM, пользователь для SSH чаще всего будет `nixos`, а не твой будущий `wkubearnament`
-- для локального теста в VM обычно нужен такой формат:
-
-```bash
-nix --extra-experimental-features "nix-command flakes" run .#install-honor-magicbook -- nixos@localhost
-```
 
 Что делает app:
 

@@ -1,14 +1,13 @@
 # modules/nixos/disko/disko.nix
 #
-# Разметка диска через disko — только для физического железа.
+# Разметка диска через disko — только для физического железа (Honor MagicBook X16 Pro).
 #
-# Этот модуль подключается ТОЛЬКО для honor-хоста через extraModules в flake.nix.
-# nixos-vm его не видит вообще — защита на уровне структуры флейка, а не assert.
+# Подключается через extraModules только для honor-хоста в flake.nix.
 #
-# Почему здесь нет assertion/mkIf на machine.isVm:
+# Почему нет assertion/mkIf на machine.isVm:
 #   machine.isVm читает config.services.qemuGuest.enable и boot.kernelModules,
 #   а disko.devices оценивается раньше — возникает infinite recursion.
-#   Правильная защита: не импортировать этот модуль в VM-конфиг (уже сделано).
+#   Защита не нужна: этот модуль просто не импортируется нигде кроме honor-хоста.
 #
 # diskDevice передаётся через specialArgs из local-device-paths.nix
 # (генерируется скриптом scripts/fetch-target-device-paths.sh).

@@ -36,9 +36,6 @@
     # localDevicePaths — опциональный атрибутсет из local-device-paths.nix
     # (diskDevice, cameraDevicePath). Передаётся через specialArgs, чтобы
     # disko.nix и howdy.nix могли получить значения без хардкода в repo.
-    #
-    # disko.nixosModules.disko НЕ включён здесь глобально — он подключается
-    # через extraModules только для honor-хоста. nixos-vm не использует disko.
     mkHost = { hostName, extraModules ? [], localDevicePaths ? {} }:
       nixpkgs.lib.nixosSystem {
         inherit system;
@@ -117,20 +114,11 @@
     };
 
     nixosConfigurations = {
-      # Основной хост — Honor MagicBook X16 Pro BRN-H76
+      # Honor MagicBook X16 Pro BRN-H76
       ${honorHostName} = mkHost {
         hostName = honorHostName;
         localDevicePaths = honorLocalDevicePaths;
-        # disko подключается только здесь: VM его не видит и не падает на diskDevice missing
         extraModules = [ disko.nixosModules.disko ];
-      };
-
-      # VM для тестирования установки и конфига без физического железа.
-      # Использует те же модули, но с machine.isVm = true —
-      # отключает AMD/Huawei-специфику, howdy, gl passthrough, s2idle.
-      # Запуск: nixos-rebuild switch --flake .#nixos-vm
-      nixos-vm = mkHost {
-        hostName = "nixos-vm";
       };
     };
   };
