@@ -1,5 +1,40 @@
 # Commands
 
+## VM Install (nixos-vm)
+
+Конфиг `nixos-vm` не использует disko — диск разметить надо вручную **до** установки.
+Скрипт `vm-install-mount.sh` берёт это на себя:
+
+```bash
+run0 sh ./scripts/vm-install-mount.sh
+```
+
+Что делает скрипт:
+
+1. Сканирует разделы, ищет подходящие для установки (ext4 или btrfs, не swap, не vfat)
+2. Если кандидат один — монтирует автоматически
+3. Если кандидатов несколько — показывает список и просит выбрать цифрой
+4. Если ни одного нет — печатает инструкцию по `cfdisk` и выходит
+5. Монтирует системный раздел в `/mnt`, EFI раздел в `/mnt/boot`
+6. Запускает `nixos-generate-config --root /mnt`
+7. Запускает `nixos-install --flake .#nixos-vm --root /mnt`
+
+Посмотреть что найдёт без монтирования:
+
+```bash
+sh ./scripts/vm-install-mount.sh --dry-run
+```
+
+Если диск ещё не размечен, скрипт выведет инструкцию:
+
+```bash
+cfdisk /dev/vda          # или /dev/sda — смотри lsblk
+mkfs.vfat -F 32 /dev/vda1
+mkfs.ext4 /dev/vda2      # или mkfs.btrfs /dev/vda2
+```
+
+После разметки — снова запусти скрипт.
+
 ## NixOS Anywhere
 
 Запускать **с Linux-машины / live ISO**, не с Windows.

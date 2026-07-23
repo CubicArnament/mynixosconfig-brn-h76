@@ -4,7 +4,8 @@
     ../../modules/nixos/meta/machine-type.nix
     ../../modules/nixos/bootloader/bootloader.nix
     ../../modules/nixos/btrfs/btrfs.nix
-    ../../modules/nixos/disko/disko.nix
+    # disko.nix НЕ импортируется: в VM разметка делается вручную через cfdisk.
+    # disko.nixosModules.disko также не подключён в mkHost для nixos-vm.
     ../../modules/nixos/auth/auth.nix
     # howdy в VM не нужен — нет вебкамеры для face auth
     (import ../../dev/development.nix).nixosModule
