@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # scripts/install-local.sh
 #
-# bash — локальная установка NixOS через disko + nixos-install.
+# bash — локальная установка NixOS через disko-install.
 # Запускать с live-ISO NixOS на целевом железе.
 #
 # Использование:
@@ -16,6 +16,7 @@ if [[ -z "$HOST_NAME" || -z "$LOCAL_DEVICE_PATHS_REL" ]]; then
   exit 1
 fi
 
+# Читаем значения из local-device-paths.nix
 DISK_DEVICE=$(grep 'diskDevice' "$LOCAL_DEVICE_PATHS_REL" | sed 's/.*"\(.*\)".*/\1/')
 
 printf "\n"
@@ -36,14 +37,15 @@ else
   printf "Non-interactive mode: proceeding automatically.\n"
 fi
 
-printf "Local install: running disko...\n"
-nix --extra-experimental-features "nix-command flakes" run github:nix-community/disko -- \
-  --mode destroy,format,mount \
-  --flake ".#${HOST_NAME}"
+printf "Local install: running disko-install...\n"
 
-printf "Running nixos-install...\n"
-nixos-install \
-  --no-root-passwd \
-  --flake ".#${HOST_NAME}"
+# disko-install объединяет разметку диска и nixos-install в один шаг.
+# --disk main <device> переопределяет disko.devices.disk.main.device
+# прямо из командной строки — не нужно полагаться на specialArgs/local-device-paths.nix
+# в момент установки.
+nix --extra-experimental-features "nix-command flakes" run github:nix-community/disko -- \
+  disko-install \
+  --flake ".#${HOST_NAME}" \
+  --disk main "$DISK_DEVICE"
 
 printf "Installation complete.\n"
