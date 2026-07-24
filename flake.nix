@@ -68,19 +68,49 @@
       else { };
     honorLocalDevicePathsRel = "hosts/${honorHostName}/local-device-paths.nix";
 
-    fetchTargetDevicePaths = pkgs.writeShellApplication {
+    # Все скрипты детекта дисков упакованы вместе — они вызывают друг друга
+    # через SCRIPT_DIR="$(dirname $0)", поэтому должны лежать рядом в store.
+    fetchTargetDevicePaths = pkgs.stdenv.mkDerivation {
       name = "fetch-target-device-paths";
-      runtimeInputs = with pkgs; [ coreutils findutils gawk gnugrep gnused openssh util-linux ];
-      text = builtins.readFile ./scripts/fetch-target-device-paths.sh;
+      src = ./scripts;
+      nativeBuildInputs = [ pkgs.makeWrapper ];
+      runtimeInputs = with pkgs; [ bash coreutils findutils gawk gnugrep gnused openssh util-linux ];
+      installPhase = ''
+        mkdir -p $out/bin $out/libexec
+
+        # Вспомогательные скрипты — в libexec
+        install -m 755 fetch-remote.sh  $out/libexec/fetch-remote.sh
+        install -m 755 fetch-local.sh   $out/libexec/fetch-local.sh
+
+        # Оркестратор — в bin с правильным PATH
+        install -m 755 fetch-target-device-paths.sh $out/bin/fetch-target-device-paths
+        wrapProgram $out/bin/fetch-target-device-paths \
+          --prefix PATH : ${pkgs.lib.makeBinPath (with pkgs; [
+            bash coreutils findutils gawk gnugrep gnused openssh util-linux
+          ])}
+      '';
     };
 
-    installHonorMagicbook = pkgs.writeShellApplication {
+    installHonorMagicbook = pkgs.stdenv.mkDerivation {
       name = "install-honor-magicbook";
-      runtimeInputs = with pkgs; [ git nix openssh ];
-      text = builtins.replaceStrings
-        [ "@fetchTargetDevicePaths@" ]
-        [ "${fetchTargetDevicePaths}" ]
-        (builtins.readFile ./scripts/install-system.sh);
+      src = ./scripts;
+      nativeBuildInputs = [ pkgs.makeWrapper ];
+      installPhase = ''
+        mkdir -p $out/bin $out/libexec
+
+        # Вспомогательные скрипты — в libexec
+        install -m 755 install-local.sh  $out/libexec/install-local.sh
+        install -m 755 install-remote.sh $out/libexec/install-remote.sh
+
+        # Подставить store-путь fetchTargetDevicePaths в оркестратор
+        substitute install-system.sh $out/bin/install-honor-magicbook \
+          --replace "@fetchTargetDevicePaths@" "${fetchTargetDevicePaths}"
+        chmod 755 $out/bin/install-honor-magicbook
+        wrapProgram $out/bin/install-honor-magicbook \
+          --prefix PATH : ${pkgs.lib.makeBinPath (with pkgs; [
+            bash git nix openssh
+          ])}
+      '';
     };
   in {
     packages.${system} = {

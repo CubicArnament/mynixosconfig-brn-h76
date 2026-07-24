@@ -24,7 +24,13 @@ fi
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 cd "$REPO_ROOT"
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -d "$BIN_DIR/../libexec" ]]; then
+  LIBEXEC_DIR="$(cd "$BIN_DIR/../libexec" && pwd)"
+else
+  LIBEXEC_DIR="$BIN_DIR"
+fi
+
 HOST_NAME="honor-magicbook-x16-pro"
 LOCAL_DEVICE_PATHS_REL="hosts/${HOST_NAME}/local-device-paths.nix"
 
@@ -34,9 +40,9 @@ LOCAL_DEVICE_PATHS_REL="hosts/${HOST_NAME}/local-device-paths.nix"
 # Шаг 2: установка
 case "$HOST" in
   localhost|127.0.0.1|::1)
-    exec bash "$SCRIPT_DIR/install-local.sh" "$HOST_NAME" "$LOCAL_DEVICE_PATHS_REL"
+    exec bash "$LIBEXEC_DIR/install-local.sh" "$HOST_NAME" "$LOCAL_DEVICE_PATHS_REL"
     ;;
   *)
-    exec bash "$SCRIPT_DIR/install-remote.sh" "$HOST_NAME" "$HOST" "$LOCAL_DEVICE_PATHS_REL"
+    exec bash "$LIBEXEC_DIR/install-remote.sh" "$HOST_NAME" "$HOST" "$LOCAL_DEVICE_PATHS_REL"
     ;;
 esac

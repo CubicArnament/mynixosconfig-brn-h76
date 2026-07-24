@@ -25,12 +25,15 @@ INSTALL_DISK_INDEX="${INSTALL_DISK_INDEX:-}"
 FETCH_RESULT="${FETCH_RESULT:-}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# В store скрипт лежит в libexec/, fetch-remote.sh — рядом.
+# В dev-режиме (scripts/) — всё в одной папке.
+LIBEXEC_DIR="$SCRIPT_DIR"
 
 # Получить сырой вывод: локально или из env
 if [[ -n "$FETCH_RESULT" ]]; then
   RESULT="$FETCH_RESULT"
 else
-  RESULT=$(sh "$SCRIPT_DIR/fetch-remote.sh" "$DISK_OVERRIDE" "$CAMERA_OVERRIDE")
+  RESULT=$(sh "$LIBEXEC_DIR/fetch-remote.sh" "$DISK_OVERRIDE" "$CAMERA_OVERRIDE")
 fi
 
 mapfile -t DISK_LINES_ARR < <(printf "%s\n" "$RESULT" | grep '^DISK|' || true)

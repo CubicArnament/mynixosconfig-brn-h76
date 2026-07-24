@@ -24,12 +24,18 @@ if [[ -z "$HOST" ]]; then
   exit 1
 fi
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# В store: bin/ и libexec/ — соседи. В dev-режиме (scripts/): всё в одной папке.
+if [[ -d "$BIN_DIR/../libexec" ]]; then
+  LIBEXEC_DIR="$(cd "$BIN_DIR/../libexec" && pwd)"
+else
+  LIBEXEC_DIR="$BIN_DIR"
+fi
 
 case "$HOST" in
   localhost|127.0.0.1|::1)
     # Локальный режим: fetch-local.sh сам вызывает fetch-remote.sh через sh
-    exec bash "$SCRIPT_DIR/fetch-local.sh" "$OUT" "$DISK_OVERRIDE" "$CAMERA_OVERRIDE"
+    exec bash "$LIBEXEC_DIR/fetch-local.sh" "$OUT" "$DISK_OVERRIDE" "$CAMERA_OVERRIDE"
     ;;
   *)
     # Удалённый режим: передать fetch-remote.sh на целевую машину через SSH pipe,
@@ -37,8 +43,8 @@ case "$HOST" in
     # shellcheck disable=SC2029
     # Intentional: DISK_OVERRIDE/CAMERA_OVERRIDE expand on the client side.
     FETCH_RESULT=$(ssh "$HOST" "sh -s -- '$DISK_OVERRIDE' '$CAMERA_OVERRIDE'" \
-                    < "$SCRIPT_DIR/fetch-remote.sh")
+                    < "$LIBEXEC_DIR/fetch-remote.sh")
     export FETCH_RESULT
-    exec bash "$SCRIPT_DIR/fetch-local.sh" "$OUT" "$DISK_OVERRIDE" "$CAMERA_OVERRIDE"
+    exec bash "$LIBEXEC_DIR/fetch-local.sh" "$OUT" "$DISK_OVERRIDE" "$CAMERA_OVERRIDE"
     ;;
 esac
