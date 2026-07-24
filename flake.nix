@@ -65,7 +65,11 @@
     honorLocalDevicePaths =
       if builtins.pathExists honorLocalDevicePathsFile
       then import honorLocalDevicePathsFile
-      else { };
+      else {
+        # Заглушка: diskDevice с дефолтом из disko.nix, сборка проходит,
+        # но установку запускать нельзя пока не сгенерирован local-device-paths.nix.
+        diskDevice = "/dev/disk/by-id/CONFIGURE-ME-run-fetch-target-device-paths";
+      };
     honorLocalDevicePathsRel = "hosts/${honorHostName}/local-device-paths.nix";
 
     # Все скрипты детекта дисков упакованы вместе — они вызывают друг друга
