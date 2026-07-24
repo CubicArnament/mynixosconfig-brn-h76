@@ -47,6 +47,7 @@ in
 
   boot.loader = {
     efi.canTouchEfiVariables = true;
+    timeout = 5;
 
     grub = {
       enable = true;
@@ -54,7 +55,6 @@ in
       efiSupport = true;
       gfxmodeEfi = "1920x1080,auto";
       gfxpayloadEfi = "keep";
-      timeout = 5;
       theme = nordicNixosGrubTheme;
       backgroundColor = "#2E3440";
     };

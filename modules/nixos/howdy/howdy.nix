@@ -1,10 +1,11 @@
-{ lib, config, cameraDevicePath ? "/dev/video0", ... }:
+{ lib, config, cameraDevicePath ? "", ... }:
 let
   cfg = config.machine;
-  # Howdy не нужен в VM (нет вебкамеры) и когда включён fprint
-  # (два биометрических метода в одном PAM стеке — источник конфликтов).
-  # Если хочешь оба — раскомментируй ниже и тщательно проверь PAM порядок.
-  enableHowdy = !cfg.isVm && !cfg.fprint.enable;
+  # Howdy отключается если:
+  # - VM (нет вебкамеры)
+  # - fprint включён (конфликт двух биометрий в PAM стеке)
+  # - cameraDevicePath пустой (камера не обнаружена при fetch-target-device-paths)
+  enableHowdy = !cfg.isVm && !cfg.fprint.enable && cameraDevicePath != "";
 in
 {
   security.pam = {

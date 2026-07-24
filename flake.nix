@@ -66,9 +66,8 @@
       if builtins.pathExists honorLocalDevicePathsFile
       then import honorLocalDevicePathsFile
       else {
-        # Заглушка: diskDevice с дефолтом из disko.nix, сборка проходит,
-        # но установку запускать нельзя пока не сгенерирован local-device-paths.nix.
         diskDevice = "/dev/disk/by-id/CONFIGURE-ME-run-fetch-target-device-paths";
+        cameraDevicePath = "";
       };
     honorLocalDevicePathsRel = "hosts/${honorHostName}/local-device-paths.nix";
 

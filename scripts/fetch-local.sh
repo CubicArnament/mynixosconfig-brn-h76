@@ -146,7 +146,7 @@ mkdir -p "$(dirname "$OUT")"
   if [[ -n "$CAMERA" ]]; then
     printf "  cameraDevicePath = \"%s\";\n" "$CAMERA"
   else
-    printf "  # cameraDevicePath intentionally omitted: no stable webcam symlink detected\n"
+    printf "  cameraDevicePath = \"\";\n"
   fi
   printf "}\n"
 } > "$OUT"
