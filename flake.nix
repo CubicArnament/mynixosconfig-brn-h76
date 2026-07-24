@@ -70,7 +70,7 @@
 
     # Все скрипты детекта дисков упакованы вместе — они вызывают друг друга
     # через SCRIPT_DIR="$(dirname $0)", поэтому должны лежать рядом в store.
-    fetchTargetDevicePaths = pkgs.stdenv.mkDerivation {
+    fetchTargetDevicePaths = pkgs.stdenvNoCC.mkDerivation {
       name = "fetch-target-device-paths";
       src = ./scripts;
       nativeBuildInputs = [ pkgs.makeWrapper ];
@@ -91,7 +91,7 @@
       '';
     };
 
-    installHonorMagicbook = pkgs.stdenv.mkDerivation {
+    installHonorMagicbook = pkgs.stdenvNoCC.mkDerivation {
       name = "install-honor-magicbook";
       src = ./scripts;
       nativeBuildInputs = [ pkgs.makeWrapper ];
