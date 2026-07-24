@@ -31,13 +31,12 @@ in
     options huawei_wmi report_brightness=1
   '';
 
-  systemd.sleep.extraConfig = lib.mkIf (!cfg.isVm) ''
-    [Sleep]
-    AllowSuspend=yes
-    AllowHibernation=no
-    AllowSuspendThenHibernate=no
-    AllowHybridSleep=no
-    SuspendState=mem
-    MemorySleepMode=s2idle
-  '';
+  systemd.sleep.settings.Sleep = lib.mkIf (!cfg.isVm) {
+    AllowSuspend = true;
+    AllowHibernation = false;
+    AllowSuspendThenHibernate = false;
+    AllowHybridSleep = false;
+    SuspendState = "mem";
+    MemorySleepMode = "s2idle";
+  };
 }
