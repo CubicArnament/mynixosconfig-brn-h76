@@ -1,15 +1,19 @@
 { lib, pkgs, inputs, ... }:
 {
   imports = [
-    (inputs.nixos-hardware + "/common/cpu/amd")
-    (inputs.nixos-hardware + "/common/cpu/amd/pstate.nix")
-    (inputs.nixos-hardware + "/common/gpu/amd")
     (inputs.nixos-hardware + "/common/pc/laptop")
     (inputs.nixos-hardware + "/common/pc/ssd")
+    # CPU/GPU AMD imports живут в modules/nixos/amd/chipset.nix и amdgpu.nix
   ];
 
   boot = {
     initrd = {
+      kernelModules = [
+        # Явно прописываем amdgpu в initrd чтобы machine-type.nix мог
+        # детектировать gpuVendor == "amd" до первой активации системы.
+        # Также нужен для KMS (Plymouth) с самого старта.
+        "amdgpu"
+      ];
       availableKernelModules = [
         "nvme"
         "xhci_pci"
@@ -20,11 +24,9 @@
       ];
     };
 
-    # Integrated webcam on this Honor platform is expected to work via the
-    # standard in-kernel UVC stack rather than an OEM out-of-tree driver.
-    # Keeping uvcvideo explicit here makes the intent clear for Howdy/webcam auth.
     kernelModules = [
-      "kvm-amd"
+      # Integrated webcam — standard in-kernel UVC stack, no OEM driver needed.
+      # Explicit here so Howdy/webcam auth expectations are clear.
       "uvcvideo"
     ];
 
@@ -35,16 +37,11 @@
   };
 
   # Enable the full firmware set, including blobs packaged as unfree.
-  # This goes beyond only redistributable firmware and relies on
-  # nixpkgs.config.allowUnfree = true in the host configuration.
-  hardware = {
-    enableAllFirmware = true;
-  };
+  # Relies on nixpkgs.config.allowUnfree = true in the host configuration.
+  hardware.enableAllFirmware = true;
 
-  services = {
-    fwupd.enable = true;
-    # power-profiles-daemon управляется через modules/nixos/power/power.nix
-  };
+  services.fwupd.enable = true;
+  # power-profiles-daemon управляется через modules/nixos/power/power.nix
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 

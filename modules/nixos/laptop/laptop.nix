@@ -7,26 +7,18 @@ let
 in
 {
   # powerManagement живёт в modules/nixos/power/power.nix.
-  # cpuFreqGovernor намеренно не выставляется нигде: при amd_pstate=active (kernel >= 6.3)
-  # PPD управляет EPP/platform_profile напрямую — governor не нужен и конфликтует с ним.
+  # AMD/Intel CPU-специфика (kvm_amd nested, updateMicrocode) — в modules/nixos/amd/chipset.nix.
+  # cpuFreqGovernor намеренно не выставляется: при amd_pstate=active PPD управляет
+  # EPP/platform_profile напрямую — governor не нужен и конфликтует с ним.
 
-  # AMD-специфичные настройки.
-  # Примечание: amd_pstate уже выставляется nixos-hardware common/cpu/amd/pstate.nix
-  # (active для ядра >= 6.3), поэтому здесь только kvm_amd nested.
-  boot.extraModprobeConfig = lib.mkIf (!cfg.isVm) (
-    lib.optionalString (cfg.cpuVendor == "amd") ''
-      options kvm_amd nested=1
-    '' +
-    lib.optionalString (cfg.cpuVendor == "intel") ''
-      options kvm_intel nested=1
-    ''
-  );
+  # Intel nested KVM — AMD вариант живёт в chipset.nix
+  boot.extraModprobeConfig = lib.mkIf (!cfg.isVm && cfg.cpuVendor == "intel") ''
+    options kvm_intel nested=1
+  '';
 
-  hardware.cpu.amd.updateMicrocode = lib.mkIf (!cfg.isVm && cfg.cpuVendor == "amd") true;
   hardware.cpu.intel.updateMicrocode = lib.mkIf (!cfg.isVm && cfg.cpuVendor == "intel") true;
 
   # Huawei WMI: battery charge thresholds + fn-lock
-  # Только на физическом Huawei/Honor железе
   services.udev.extraRules = lib.mkIf (!cfg.isVm && cfg.isLaptop) ''
     ACTION=="add", SUBSYSTEM=="platform", KERNEL=="huawei-wmi", TAG+="systemd", ENV{SYSTEMD_WANTS}+="huawei-wmi-apply.service"
   '';
@@ -35,7 +27,6 @@ in
     description = "Apply Honor Huawei WMI battery and Fn-lock settings";
     wants = [ "systemd-udev-settle.service" ];
     after = [ "systemd-udev-settle.service" ];
-    # Сервис запустится только если huawei-wmi платформа реально существует
     unitConfig.ConditionPathExists = "/sys/devices/platform/huawei-wmi";
     serviceConfig.Type = "oneshot";
     script = ''

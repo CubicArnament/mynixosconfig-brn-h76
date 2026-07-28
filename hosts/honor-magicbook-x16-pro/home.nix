@@ -2,6 +2,7 @@
 {
   imports = [
     (import ../../dev/development.nix).homeModule
+    ../../modules/home/amd/rocm.nix
     ../../modules/home/fish/fish.nix
     ../../modules/home/gnome/gnome.nix
     ../../modules/home/virtualization/virtualization.nix

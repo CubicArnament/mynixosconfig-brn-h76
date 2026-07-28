@@ -3,30 +3,23 @@ let
   cfg = config.machine;
 in
 {
+  # iommu=pt, amdgpu.* параметры живут в modules/nixos/amd/chipset.nix.
+  # kvm_amd nested и updateMicrocode — там же.
+
   boot.kernelParams = [
     # Убирает зависание на инициализации несуществующих legacy COM-портов
-    # после resume на части современных ноутбуков. Безвреден в VM.
     "8250.nr_uarts=0"
 
-    # Смягчает AMD-Vi / NVMe resume-проблемы на Phoenix/Rembrandt-платформах.
-    # В VM не влияет на поведение.
-    "iommu=pt"
-
-    # Запрещает глубокие APST power states у NVMe.
-    # В VM NVMe виртуальный — параметр игнорируется гостем.
+    # Запрещает глубокие APST power states у NVMe — убирает resume-задержки
     "nvme_core.default_ps_max_latency_us=0"
   ] ++ lib.optionals (!cfg.isVm) [
-    # s2idle актуален только на физическом железе.
-    # В VM suspend обычно не работает или обрабатывается гипервизором.
+    # s2idle актуален только на физическом железе
     "mem_sleep_default=s2idle"
 
-    # Уменьшает ложные wake events от EC во время s2idle.
-    # В VM EC нет — параметр бесполезен.
+    # Уменьшает ложные wake events от EC во время s2idle
     "acpi.ec_no_wakeup=1"
   ];
 
-  # huawei_wmi параметр: autoload произойдёт только если платформа существует,
-  # но в VM лучше не засорять modprobe конфиг лишним.
   boot.extraModprobeConfig = lib.mkIf (!cfg.isVm) ''
     options huawei_wmi report_brightness=1
   '';

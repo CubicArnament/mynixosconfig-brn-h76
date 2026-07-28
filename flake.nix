@@ -33,9 +33,6 @@
     userName = user.name;
 
     # Хелпер для сборки nixosConfiguration.
-    # localDevicePaths — опциональный атрибутсет из local-device-paths.nix
-    # (diskDevice, cameraDevicePath). Передаётся через specialArgs, чтобы
-    # disko.nix и howdy.nix могли получить значения без хардкода в repo.
     mkHost = { hostName, extraModules ? [], localDevicePaths ? {} }:
       let
         sharedArgs = { inherit inputs hostName user userName; } // localDevicePaths;
@@ -60,8 +57,7 @@
 
     # Honor MagicBook — основной хост
     honorHostName = "honor-magicbook-x16-pro";
-    honorHostDir = ./hosts/${honorHostName};
-    honorLocalDevicePathsFile = honorHostDir + "/local-device-paths.nix";
+    honorLocalDevicePathsFile = ./hosts/${honorHostName}/local-device-paths.nix;
     honorLocalDevicePaths =
       if builtins.pathExists honorLocalDevicePathsFile
       then import honorLocalDevicePathsFile
@@ -69,52 +65,11 @@
         diskDevice = "/dev/disk/by-id/CONFIGURE-ME-run-fetch-target-device-paths";
         cameraDevicePath = "";
       };
-    honorLocalDevicePathsRel = "hosts/${honorHostName}/local-device-paths.nix";
 
-    # Все скрипты детекта дисков упакованы вместе — они вызывают друг друга
-    # через SCRIPT_DIR="$(dirname $0)", поэтому должны лежать рядом в store.
-    fetchTargetDevicePaths = pkgs.stdenvNoCC.mkDerivation {
-      name = "fetch-target-device-paths";
-      src = ./scripts;
-      nativeBuildInputs = [ pkgs.makeWrapper ];
-      runtimeInputs = with pkgs; [ bash coreutils findutils gawk gnugrep gnused openssh util-linux ];
-      installPhase = ''
-        mkdir -p $out/bin $out/libexec
+    # Деривации вынесены в trustedinstaller/*.nix
+    fetchTargetDevicePaths = pkgs.callPackage ./trustedinstaller/remote/drv.nix { };
+    installHonorMagicbook  = pkgs.callPackage ./trustedinstaller/orchestrator-drv.nix { };
 
-        # Вспомогательные скрипты — в libexec
-        install -m 755 fetch-remote.sh  $out/libexec/fetch-remote.sh
-        install -m 755 fetch-local.sh   $out/libexec/fetch-local.sh
-
-        # Оркестратор — в bin с правильным PATH
-        install -m 755 fetch-target-device-paths.sh $out/bin/fetch-target-device-paths
-        wrapProgram $out/bin/fetch-target-device-paths \
-          --prefix PATH : ${pkgs.lib.makeBinPath (with pkgs; [
-            bash coreutils findutils gawk gnugrep gnused openssh util-linux
-          ])}
-      '';
-    };
-
-    installHonorMagicbook = pkgs.stdenvNoCC.mkDerivation {
-      name = "install-honor-magicbook";
-      src = ./scripts;
-      nativeBuildInputs = [ pkgs.makeWrapper ];
-      installPhase = ''
-        mkdir -p $out/bin $out/libexec
-
-        # Вспомогательные скрипты — в libexec
-        install -m 755 install-local.sh  $out/libexec/install-local.sh
-        install -m 755 install-remote.sh $out/libexec/install-remote.sh
-
-        # Подставить store-путь fetchTargetDevicePaths в оркестратор
-        substitute install-system.sh $out/bin/install-honor-magicbook \
-          --replace "@fetchTargetDevicePaths@" "${fetchTargetDevicePaths}"
-        chmod 755 $out/bin/install-honor-magicbook
-        wrapProgram $out/bin/install-honor-magicbook \
-          --prefix PATH : ${pkgs.lib.makeBinPath (with pkgs; [
-            bash git nix openssh
-          ])}
-      '';
-    };
   in {
     packages.${system} = {
       inherit fetchTargetDevicePaths installHonorMagicbook;
