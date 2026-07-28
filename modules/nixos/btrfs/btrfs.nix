@@ -1,11 +1,14 @@
-{ pkgs, ... }:
+{ pkgs, lib, config, ... }:
+let
+  hasRootBtrfs = config.fileSystems ? "/" && config.fileSystems."/".fsType == "btrfs";
+in
 {
   environment.systemPackages = with pkgs; [
     btrfs-progs
     snapper
   ];
 
-  services.btrfs.autoScrub = {
+  services.btrfs.autoScrub = lib.mkIf hasRootBtrfs {
     enable = true;
     interval = "monthly";
   };
