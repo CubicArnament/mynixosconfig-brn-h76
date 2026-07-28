@@ -11,7 +11,9 @@ let
   isAmdGpu = cfg.gpuVendor == "amd";
 in
 {
-  imports = lib.optional isAmdGpu (inputs.nixos-hardware + "/common/gpu/amd");
+  imports = [
+    (inputs.nixos-hardware + "/common/gpu/amd")
+  ];
 
   hardware.graphics = lib.mkIf isAmdGpu {
     enable = true;

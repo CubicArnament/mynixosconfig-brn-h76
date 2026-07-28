@@ -13,10 +13,10 @@ let
   isAmdCpu = cfg.cpuVendor == "amd";
 in
 {
-  # imports внутри модуля вычисляются лениво — можно использовать lib.optional
-  # без infinite recursion (в отличие от imports в configuration.nix)
-  imports = lib.optional isAmdCpu (inputs.nixos-hardware + "/common/cpu/amd")
-         ++ lib.optional isAmdCpu (inputs.nixos-hardware + "/common/cpu/amd/pstate.nix");
+  imports = [
+    (inputs.nixos-hardware + "/common/cpu/amd")
+    (inputs.nixos-hardware + "/common/cpu/amd/pstate.nix")
+  ];
 
   boot = lib.mkIf isAmdCpu {
     kernelModules = [
