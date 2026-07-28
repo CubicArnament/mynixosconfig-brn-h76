@@ -74,7 +74,8 @@
     enable = true;
     package = pkgs.lact.overrideAttrs (oldAttrs: {
       nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [ pkgs.pkg-config ];
-      buildInputs = (oldAttrs.buildInputs or []) ++ [ pkgs.libdisplay-info ];
+      buildInputs = (oldAttrs.buildInputs or []) ++ [ pkgs.libdisplay-info pkgs.libadwaita ];
+      propagatedBuildInputs = (oldAttrs.propagatedBuildInputs or []) ++ [ pkgs.libdisplay-info ];
     });
   };
 }
