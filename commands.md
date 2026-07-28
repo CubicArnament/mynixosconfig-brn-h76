@@ -1,147 +1,311 @@
 # Commands
 
-## NixOS Anywhere
+## Установка
 
 Запускать **с Linux-машины / live ISO**, не с Windows.
 
-Важно:
+> Раз выставил в live-среде — больше не печатать каждый раз:
+> ```bash
+> export NIX_CONFIG="experimental-features = nix-command flakes"
+> ```
+> Все команды ниже написаны в короткой форме `nix run ...`
+> (без `--extra-experimental-features`).
+> Замени `nixos@<ip>` на реального пользователя и адрес целевой машины.
 
-- для `nixos-anywhere` нужен доступ по `SSH`
-- поэтому не рассчитывай на обычный `NixOS` live ISO, если в нём у тебя не поднят `sshd`
-- на практике проще использовать **minimal ISO**, где сценарий с `sshd` подходит лучше
-- для `disko` не используй raw-disk `UUID`: на этапе разметки правильнее whole-disk `by-id`
-- `disko` и установка `NixOS` в этом репозитории **полностью уничтожают данные на выбранном install-диске**
-- ты сам отвечаешь за выбор целевого диска; конфиг и скрипты лишь пытаются снизить риск ошибки, но не дают гарантий сохранности данных
+---
 
-### One-shot install
+### Сценарий 1 — Локальная установка с live ISO (один шаг)
 
-Основной сценарий теперь такой — **одна команда из корня репозитория**:
-
-> Замени `wkubearnament` на имя пользователя, которое задано в
-> `hosts/honor-magicbook-x16-pro/user.nix`, если ты его менял.
+Загрузился с minimal ISO на ноуте, подключился к wifi (`nmtui`), склонировал репо:
 
 ```bash
-nix --extra-experimental-features "nix-command flakes" run .#install-honor-magicbook -- wkubearnament@<target-host>
+git clone https://github.com/<you>/mynixosconfig && cd mynixosconfig
+nix run .#install-honor-magicbook -- localhost
 ```
 
-Если не хочешь каждый раз дописывать флаги в live-среде:
+Что происходит: детект дисков локально → выбор диска → `disko-install` (разметка + NixOS за один шаг).
+
+---
+
+### Сценарий 2 — Удалённая установка через SSH (один шаг)
 
 ```bash
-export NIX_CONFIG="experimental-features = nix-command flakes"
+nix run .#install-honor-magicbook -- nixos@<ip>
 ```
 
-После этого можно использовать короткую форму:
+Что происходит: детект дисков на целевой машине через SSH → выбор диска → `nixos-anywhere`.
+
+---
+
+### Сценарий 3 — Раздельно: сначала фетч, потом установка (localhost)
+
+Если хочешь проверить что запишется в `local-device-paths.nix` перед тем как жать на курок:
 
 ```bash
-nix run .#install-honor-magicbook -- wkubearnament@<target-host>
+# Шаг 1: только детект — ничего не устанавливает
+nix run .#fetch-target-device-paths -- localhost
+
+# Проверь результат
+cat hosts/honor-magicbook-x16-pro/local-device-paths.nix
+
+# Шаг 2: установка с уже готовым local-device-paths.nix
+nix run .#install-honor-magicbook -- localhost
 ```
 
-Важно:
+---
 
-- после `--` нужен **пробел**, то есть `-- wkubearnament@...`, а не `--wkubearnament@...`
-- в live/minimal среде `nix-command` и `flakes` часто не включены по умолчанию
-- `localhost` для этого сценария тоже идёт через `SSH`, так что `sshd` должен быть запущен
-
-Что делает app:
-
-1. заходит по `SSH` на целевой host
-2. консервативно сортирует install-диски по приоритету `NVMe > SATA SSD > прочий SSD > HDD`
-3. жёстко фильтрует только подходящие whole-disk кандидаты и игнорирует `usb`, `loop`, `zram`, `md`, `dm-*`, `sr*`
-4. пытается исключить уже занятые диски по `mountpoints`, `holders` и признаку `current-root`, если есть более безопасные свободные кандидаты
-5. если найдено несколько кандидатов — в обычном TTY предлагает **текстовый выбор без графики**
-6. если пользователь не ответил за 20 секунд или сессия неинтерактивная/headless — автоматически берёт **первый кандидат**
-7. первый кандидат — это самый быстрый класс диска, а внутри класса самый ранний device order
-8. если выбранный диск выглядит занятым, скрипт явно предупреждает, что **все данные будут уничтожены**
-9. в интерактивной сессии можно отменить wipe, ответив `NO`; если ответа нет — действие по умолчанию это **wipe и продолжение установки**
-10. пытается найти стабильный `cameraDevicePath` через `/dev/v4l/by-id`, затем `by-path`
-11. если камера не найдена — **не падает**, а просто не пишет `cameraDevicePath`
-12. пишет в лог, как именно был выбран диск: `AUTOSELECTED=1` / `USERSELECTED=1`
-13. пишет локальный файл
-   `hosts/honor-magicbook-x16-pro/local-device-paths.nix`
-14. запускает `nixos-anywhere` уже с корректным flake-конфигом
-
-Если у тебя многодисковая машина и ты не хочешь полагаться на автоселект,
-передай нужный `by-id` явно через override.
-
-`selectionSource` в выводе покажет, был ли это `explicit-override`,
-`env-disk-index`, `interactive-menu`, `single-candidate`,
-`auto-timeout-or-default` или `auto-noninteractive`.
-
-Скрипт также печатает `interactiveTTY`, `originalCandidateCount`,
-`filteredCandidateCount`, `occupancyFilterApplied`, `diskOccupied`,
-`occupiedBecause` и `destructiveConfirmation`, чтобы в логах было видно,
-почему был выбран именно этот диск и как была подтверждена очистка.
-
-### Auto-detect only
-
-Если хочешь только сгенерировать пути устройств без установки:
+### Сценарий 4 — Раздельно: сначала фетч, потом установка (remote)
 
 ```bash
-nix --extra-experimental-features "nix-command flakes" run .#fetch-target-device-paths -- wkubearnament@<target-host>
+# Шаг 1: только детект на удалённой машине
+nix run .#fetch-target-device-paths -- nixos@<ip>
+
+# Проверь результат
+cat hosts/honor-magicbook-x16-pro/local-device-paths.nix
+
+# Шаг 2: установка
+nix run .#install-honor-magicbook -- nixos@<ip>
 ```
 
-Если нужно явно переопределить диск или камеру:
+---
+
+### Сценарий 5 — Фетч с явным выбором диска (по индексу)
+
+Когда несколько дисков и не хочешь полагаться на интерактивное меню:
+
+```bash
+# Показать кандидатов без записи файла (localhost)
+INSTALL_DISK_INDEX=1 nix run .#fetch-target-device-paths -- localhost
+
+# Выбрать второй кандидат
+INSTALL_DISK_INDEX=2 nix run .#fetch-target-device-paths -- nixos@<ip>
+```
+
+---
+
+### Сценарий 6 — Фетч с фильтром по классу или модели
+
+```bash
+# Только NVMe диски
+INSTALL_DISK_FILTER=nvme nix run .#fetch-target-device-paths -- nixos@<ip>
+
+# По подстроке модели
+INSTALL_DISK_FILTER=Samsung nix run .#fetch-target-device-paths -- nixos@<ip>
+
+# Второй NVMe если их несколько
+INSTALL_DISK_FILTER=nvme INSTALL_DISK_INDEX=2 nix run .#fetch-target-device-paths -- nixos@<ip>
+
+# Тот диск на котором сейчас стоит система (перезапись)
+INSTALL_DISK_FILTER=system nix run .#fetch-target-device-paths -- nixos@<ip>
+```
+
+---
+
+### Сценарий 7 — Фетч с явным override диска и камеры
 
 ```bash
 nix run .#fetch-target-device-paths -- \
-  wkubearnament@<target-host> \
+  nixos@<ip> \
   hosts/honor-magicbook-x16-pro/local-device-paths.nix \
-  /dev/disk/by-id/nvme-... \
-  /dev/v4l/by-id/...-video-index0
+  /dev/disk/by-id/nvme-SAMSUNG_... \
+  /dev/v4l/by-id/usb-...-video-index0
 ```
 
-Если нужен неинтерактивный, но управляемый выбор в сложной многодисковой машине,
-используй env-переменные:
+---
+
+### Сценарий 8 — Установка с подробными логами
 
 ```bash
-INSTALL_DISK_FILTER=nvme nix run .#fetch-target-device-paths -- wkubearnament@<target-host>
-INSTALL_DISK_FILTER=Samsung INSTALL_DISK_INDEX=2 nix run .#fetch-target-device-paths -- wkubearnament@<target-host>
-INSTALL_DISK_FILTER=system nix run .#fetch-target-device-paths -- wkubearnament@<target-host>
-INSTALL_DISK_FILTER=root nix run .#fetch-target-device-paths -- wkubearnament@<target-host>
+nix run .#install-honor-magicbook -- localhost 2>&1 | tee install.log
 ```
 
-`INSTALL_DISK_FILTER` матчит класс диска (`nvme`, `sata-ssd`, `solid-state`, `hdd`)
-или подстроку в `by-id` / модели.
-Специальные значения `system` и `root` пытаются выбрать именно диск, на котором
-сейчас находится корневая система удалённой машины.
-`INSTALL_DISK_INDEX` — это номер кандидата, начиная с `1`, уже после фильтрации.
+```bash
+nix run .#install-honor-magicbook -- nixos@<ip> 2>&1 | tee install.log
+```
 
-Если выбран занятый диск, итоговая установка **сотрёт все данные на нём**.
-По умолчанию отсутствие ответа в destructive prompt трактуется как согласие на wipe.
+---
 
-### Low-level fallback
-
-Голая команда `nixos-anywhere` оставлена как fallback, но сама по себе она **не умеет**
-до локальной оценки flake заранее узнать remote `disk by-id`.
+### Сценарий 9 — Установка без логов (тихий режим)
 
 ```bash
-nix --extra-experimental-features "nix-command flakes" run github:nix-community/nixos-anywhere -- \
+nix run .#install-honor-magicbook -- localhost > /dev/null
+```
+
+---
+
+### Сценарий 10 — Headless / CI (неинтерактивный, без подтверждений)
+
+Если stdin не TTY — скрипт автоматически пропускает все промпты и берёт первый кандидат:
+
+```bash
+echo "" | nix run .#install-honor-magicbook -- nixos@<ip>
+```
+
+Или через pipe в CI:
+
+```bash
+nix run .#install-honor-magicbook -- nixos@<ip> < /dev/null
+```
+
+---
+
+### Сценарий 11 — Low-level fallback (голый nixos-anywhere)
+
+Если `install-honor-magicbook` недоступен и `local-device-paths.nix` уже заполнен вручную:
+
+```bash
+nix run github:nix-community/nixos-anywhere -- \
   --flake .#honor-magicbook-x16-pro \
-  wkubearnament@<target-host>
+  nixos@<ip>
 ```
 
-Если хочешь сначала вручную убедиться в разметке/доступности диска на целевой машине:
+---
+
+### Сценарий 12 — Проверка дисков вручную перед установкой
 
 ```bash
-lsblk
+# На целевой машине
+lsblk -dnpo NAME,TYPE,SIZE,MODEL,TRAN
+ls -la /dev/disk/by-id/ | grep -v part
+
+# На удалённой через SSH
+ssh nixos@<ip> "lsblk -dnpo NAME,TYPE,SIZE,MODEL,TRAN"
 ```
 
-В этой конфигурации ожидается системный диск:
+---
+
+### Что делает фетч (логика выбора диска)
+
+1. Сортирует кандидаты: `NVMe > SATA SSD > прочий SSD > HDD`
+2. Игнорирует: `usb`, `loop`, `zram`, `md`, `dm-*`, `sr*`, `ram`, `fd`
+3. Предпочитает свободные диски (без mountpoints/holders/current-root)
+4. Интерактивное меню при нескольких кандидатах; 20 сек таймаут → первый кандидат
+5. Пишет `local-device-paths.nix` с `diskDevice` (by-id) и `cameraDevicePath`
+
+Поля в выводе фетча:
+
+| Поле | Что значит |
+|---|---|
+| `selectionSource` | `explicit-override` / `env-disk-index` / `interactive-menu` / `single-candidate` / `auto-timeout-or-default` / `auto-noninteractive` |
+| `AUTOSELECTED` / `USERSELECTED` | был ли выбор автоматическим |
+| `diskOccupied` | диск занят (mountpoints / holders / current-root) |
+| `occupancyFilterApplied` | были ли отфильтрованы занятые диски |
+| `interactiveTTY` | запущен ли скрипт в интерактивном TTY |
+
+---
+
+### Важные ограничения
+
+- `nixos-anywhere` требует SSH доступ — `sshd` должен быть запущен на целевой машине
+- `localhost` режим не использует SSH — запускать прямо на целевом железе с live ISO
+- `disko` и `disko-install` **полностью уничтожают данные** на выбранном диске
+- не используй raw UUID для `diskDevice` — только whole-disk `by-id`
+- ты сам отвечаешь за выбор диска; скрипты снижают риск, но не дают гарантий
+
+---
+
+## Сборка и проверка (WSL / другой NixOS)
+
+Все команды запускать из корня репо. Дерево грязное — закоммить или выставить `--impure`.
+
+### Полная сборка системы
+
+Собирает всё дерево деривации, создаёт `./result`:
 
 ```bash
-/dev/nvme0n1
+nix build .#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.toplevel
 ```
+
+С логами прогресса:
+
+```bash
+nix build .#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.toplevel \
+  --log-format bar-with-logs
+```
+
+### Быстрая проверка eval (без сборки пакетов)
+
+Только вычисляет конфиг — в разы быстрее полной сборки, ловит ошибки типов и assertions:
+
+```bash
+nix eval .#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.toplevel
+```
+
+### Проверка flake без сборки
+
+Синтаксис, структура outputs, отсутствие `--impure` зависимостей:
+
+```bash
+nix flake check
+```
+
+### Проверка конкретного атрибута
+
+```bash
+# Посмотреть какой diskDevice попал в конфиг
+nix eval .#nixosConfigurations.honor-magicbook-x16-pro.config.disko.devices.disk.main.device
+
+# Посмотреть итоговый список пакетов
+nix eval .#nixosConfigurations.honor-magicbook-x16-pro.config.environment.systemPackages \
+  --apply 'map (p: p.name)' --json | jq .
+
+# Проверить что machine.gpuVendor определился правильно
+nix eval .#nixosConfigurations.honor-magicbook-x16-pro.config.machine.gpuVendor
+
+# Проверить machine.cpuVendor
+nix eval .#nixosConfigurations.honor-magicbook-x16-pro.config.machine.cpuVendor
+```
+
+### Полная трассировка при ошибке
+
+```bash
+nix build .#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.toplevel \
+  --show-trace
+```
+
+### Сборка установщиков
+
+```bash
+# Проверить что fetch-target-device-paths собирается
+nix build .#fetch-target-device-paths
+
+# Проверить что install-honor-magicbook собирается
+nix build .#install-honor-magicbook
+
+# Оба сразу
+nix build .#fetch-target-device-paths .#install-honor-magicbook
+```
+
+### Если дерево грязное (dirty tree)
+
+`nix build` на dirty git tree берёт файлы из последнего коммита, а не с диска.
+`local-device-paths.nix` трекается в git с заглушкой — поэтому сборка проходит.
+Изменения в других файлах нужно закоммитить перед сборкой:
+
+```bash
+git add -u && git commit -m "wip: test build"
+nix build .#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.toplevel
+```
+
+Или использовать `--impure` (читает файлы с диска, игнорирует dirty):
+
+```bash
+nix build .#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.toplevel \
+  --impure
+```
+
+---
 
 ## Rebuild
 
-На установленной системе, если твой flake лежит в `~/.config/nixos`:
-
-> Имя пользователя и домашний путь централизованно задаются в
-> `hosts/honor-magicbook-x16-pro/user.nix`.
+На установленной системе, если flake лежит в `~/.config/nixos`:
 
 ```bash
 run0 nixos-rebuild switch --flake ~/.config/nixos#honor-magicbook-x16-pro
 ```
+
+> Имя пользователя и домашний путь централизованно задаются в
+> `hosts/honor-magicbook-x16-pro/user.nix`.
 
 ## Update flake inputs
 
@@ -149,33 +313,21 @@ run0 nixos-rebuild switch --flake ~/.config/nixos#honor-magicbook-x16-pro
 run0 nix flake update --flake ~/.config/nixos
 ```
 
-`run0` уже настроен так, что пользователь из группы `wheel` может повышать
-права только через аутентификацию: либо пароль, либо `Howdy`, если face auth
-сработал.
+`run0` требует аутентификации для группы `wheel`: пароль или Howdy (face auth).
 
 ## Face auth / Howdy
 
-Проверить видеоустройства:
-
 ```bash
+# Проверить видеоустройства
 ls -l /dev/video* /dev/v4l/by-path
-```
 
-Добавить лицо в Howdy:
-
-```bash
+# Добавить лицо
 run0 howdy add
 ```
 
-Если Howdy смотрит не в ту камеру, поправь `device_path` в:
-
-```text
-modules/nixos/howdy/howdy.nix
-```
+Если Howdy смотрит не в ту камеру — поправь `device_path` в `modules/nixos/howdy/howdy.nix`.
 
 ## Snapper
-
-Проверить конфиг root:
 
 ```bash
 snapper -c root list
@@ -183,15 +335,11 @@ snapper -c root list
 
 ## Virtualization
 
-Проверить libvirt:
-
 ```bash
 systemctl status libvirtd
 ```
 
 ## k3s
-
-Проверить k3s:
 
 ```bash
 systemctl status k3s
@@ -200,14 +348,7 @@ kubectl get nodes
 
 ## Nix development
 
-Для dev workflow в системе включены:
-
-- `nix-command` и `flakes`
-- `direnv`
-- `nix-direnv`
-- `trusted-users = [ "root" "@wheel" ]`
-
-Базовое использование:
+Включено: `nix-command`, `flakes`, `direnv`, `nix-direnv`, `trusted-users = ["root" "@wheel"]`.
 
 ```bash
 cd <project>
@@ -215,18 +356,9 @@ direnv allow
 nix develop
 ```
 
-В `fish` также добавлены короткие abbreviations:
-
-- `nd` → `nix develop`
-- `nf` → `nix flake check`
-- `nu` → `nix flake update`
+Fish abbreviations: `nd` → `nix develop`, `nf` → `nix flake check`, `nu` → `nix flake update`.
 
 ## Wayland screen sharing
-
-Для `OBS`, `Discord` и других Wayland-приложений screen sharing в этой
-конфигурации завязан на `PipeWire + WirePlumber + xdg-desktop-portal-gnome`.
-
-Быстрые проверки на установленной системе:
 
 ```bash
 systemctl --user status pipewire pipewire-pulse wireplumber
@@ -234,16 +366,10 @@ systemctl status xdg-desktop-portal
 journalctl --user -u wireplumber -b
 ```
 
-Если конкретный Electron-клиент всё ещё тупит под Wayland, проверь, что он
-запущен с Wayland/Ozone support, а не через старый X11 fallback.
-
 ## Webcam / UVC
-
-Проверить, что камера поднялась через `uvcvideo`:
 
 ```bash
 dmesg | grep -i uvc
 ```
 
-Если `Howdy` не видит камеру, но `/dev/video*` есть, сначала проверь правильный node,
-а не пытайся сразу искать vendor-specific драйвер.
+Если Howdy не видит камеру но `/dev/video*` есть — проверь правильный node через `v4l2-ctl --list-devices`.
