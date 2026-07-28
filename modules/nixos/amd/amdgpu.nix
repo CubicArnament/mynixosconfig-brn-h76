@@ -11,29 +11,33 @@
     (inputs.nixos-hardware + "/common/gpu/amd")
   ];
 
-  hardware.graphics = {
-    enable = true;
-    enable32Bit = true;
+  hardware = {
+    graphics = {
+      enable = true;
+      enable32Bit = true;
 
-    extraPackages = with pkgs; [
-      # ROCm CLR — OpenCL + HIP runtime для 780M
-      rocmPackages.clr
-      rocmPackages.clr.icd
-    ];
+      extraPackages = with pkgs; [
+        # ROCm CLR — OpenCL + HIP runtime для 780M
+        rocmPackages.clr
+        rocmPackages.clr.icd
+      ];
 
-    extraPackages32 = with pkgs; [
-      driversi686Linux.mesa
-    ];
+      extraPackages32 = with pkgs; [
+        driversi686Linux.mesa
+      ];
+    };
+
+    amdgpu = {
+      # KMS с самого старта + Plymouth без артефактов
+      initrd.enable = true;
+
+      # OpenCL через ROCm CLR
+      opencl.enable = true;
+
+      # Overdrive — разблокирует sysfs-интерфейс частот/напряжений для LACT
+      overdrive.enable = true;
+    };
   };
-
-  # KMS с самого старта + Plymouth без артефактов
-  hardware.amdgpu.initrd.enable = true;
-
-  # OpenCL через ROCm CLR
-  hardware.amdgpu.opencl.enable = true;
-
-  # Overdrive — разблокирует sysfs-интерфейс частот/напряжений для LACT
-  hardware.amdgpu.overdrive.enable = true;
 
   boot.kernelParams = [
     # Display Core — HDR и VRR на eDP/HDMI

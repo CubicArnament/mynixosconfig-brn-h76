@@ -14,24 +14,26 @@
     (inputs.nixos-hardware + "/common/cpu/amd/pstate.nix")
   ];
 
-  boot.kernelModules = [
-    "kvm-amd"  # AMD-V виртуализация
-    "msr"      # мониторинг CPU через turbostat/perf/ryzenadj
-  ];
+  boot = {
+    kernelModules = [
+      "kvm-amd"  # AMD-V виртуализация
+      "msr"      # мониторинг CPU через turbostat/perf/ryzenadj
+    ];
 
-  boot.kernelParams = [
-    # HMM: GPU обрабатывает page fault вместо сброса →
-    # динамическая подгрузка страниц по требованию (Unified Memory)
-    "amdgpu.noretry=0"
+    kernelParams = [
+      # HMM: GPU обрабатывает page fault вместо сброса →
+      # динамическая подгрузка страниц по требованию (Unified Memory)
+      "amdgpu.noretry=0"
 
-    # IOMMU passthrough — снижает латентность DMA на APU
-    "iommu=pt"
-  ];
+      # IOMMU passthrough — снижает латентность DMA на APU
+      "iommu=pt"
+    ];
 
-  boot.extraModprobeConfig = ''
-    # Nested KVM для AMD
-    options kvm_amd nested=1
-  '';
+    extraModprobeConfig = ''
+      # Nested KVM для AMD
+      options kvm_amd nested=1
+    '';
+  };
 
   # Микрокод AMD — обновления безопасности и исправления errata
   hardware.cpu.amd.updateMicrocode = true;
