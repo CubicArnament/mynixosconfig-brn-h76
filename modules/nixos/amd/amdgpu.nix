@@ -5,17 +5,13 @@
 #
 # Пользовательские переменные окружения (HSA_*, PYTORCH_*) — в modules/home/amd/rocm.nix.
 
-{ lib, config, pkgs, inputs, ... }:
-let
-  cfg = config.machine;
-  isAmdGpu = cfg.gpuVendor == "amd";
-in
+{ lib, pkgs, inputs, ... }:
 {
   imports = [
     (inputs.nixos-hardware + "/common/gpu/amd")
   ];
 
-  hardware.graphics = lib.mkIf isAmdGpu {
+  hardware.graphics = {
     enable = true;
     enable32Bit = true;
 
@@ -31,20 +27,20 @@ in
   };
 
   # KMS с самого старта + Plymouth без артефактов
-  hardware.amdgpu.initrd.enable = lib.mkIf isAmdGpu true;
+  hardware.amdgpu.initrd.enable = true;
 
   # OpenCL через ROCm CLR
-  hardware.amdgpu.opencl.enable = lib.mkIf isAmdGpu true;
+  hardware.amdgpu.opencl.enable = true;
 
   # Overdrive — разблокирует sysfs-интерфейс частот/напряжений для LACT
-  hardware.amdgpu.overdrive.enable = lib.mkIf isAmdGpu true;
+  hardware.amdgpu.overdrive.enable = true;
 
-  boot.kernelParams = lib.optionals isAmdGpu [
+  boot.kernelParams = [
     # Display Core — HDR и VRR на eDP/HDMI
     "amdgpu.dc=1"
   ];
 
-  environment.variables = lib.mkIf isAmdGpu {
+  environment.variables = {
     # RADV (Mesa) быстрее AMDVLK для gaming и rendering
     AMD_VULKAN_ICD = "RADV";
 
@@ -57,7 +53,7 @@ in
   };
 
   # /opt/rocm симлинк — нужен PyTorch, llama.cpp ROCm backend и др.
-  systemd.tmpfiles.rules = lib.optionals isAmdGpu (
+  systemd.tmpfiles.rules = (
     let
       rocmEnv = pkgs.symlinkJoin {
         name = "rocm-combined";
@@ -70,5 +66,5 @@ in
   );
 
   # LACT — GUI управление частотами, напряжением, кривой вентилятора
-  services.lact.enable = lib.mkIf isAmdGpu true;
+  services.lact.enable = true;
 }
