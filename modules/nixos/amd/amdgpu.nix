@@ -70,5 +70,11 @@
   );
 
   # LACT — GUI управление частотами, напряжением, кривой вентилятора
-  services.lact.enable = true;
+  services.lact = {
+    enable = true;
+    package = pkgs.lact.overrideAttrs (oldAttrs: {
+      nativeBuildInputs = (oldAttrs.nativeBuildInputs or []) ++ [ pkgs.pkg-config ];
+      buildInputs = (oldAttrs.buildInputs or []) ++ [ pkgs.libdisplay-info ];
+    });
+  };
 }
