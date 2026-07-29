@@ -57,7 +57,7 @@
   };
 
   # /opt/rocm симлинк — нужен PyTorch, llama.cpp ROCm backend и др.
-  systemd.tmpfiles.rules = (
+  systemd.tmpfiles.rules =
     let
       rocmEnv = pkgs.symlinkJoin {
         name = "rocm-combined";
@@ -66,7 +66,6 @@
     in [
       "L+ /opt/rocm - - - - ${rocmEnv}"
       "L+ /opt/amdgpu/share/libdrm/amdgpu.ids - - - - ${pkgs.libdrm}/share/libdrm/amdgpu.ids"
-    ]
-  );
+    ];
 
 }

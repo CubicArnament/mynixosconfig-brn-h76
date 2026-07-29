@@ -44,6 +44,9 @@ fi
 
 ORIGINAL_DISK_COUNT=${#DISK_LINES_ARR[@]}
 OCCUPANCY_FILTER_APPLIED=0
+INTERACTIVE_TTY=0
+
+[[ -t 0 && -t 1 && -r /dev/tty ]] && INTERACTIVE_TTY=1
 
 if [[ -n "$INSTALL_DISK_FILTER" && -z "$DISK_OVERRIDE" ]]; then
   FILTER_KIND="${INSTALL_DISK_FILTER,,}"
@@ -65,7 +68,7 @@ if [[ -n "$INSTALL_DISK_FILTER" && -z "$DISK_OVERRIDE" ]]; then
   mapfile -t DISK_LINES_ARR <<< "$FILTERED"
 fi
 
-if [[ -z "$DISK_OVERRIDE" ]]; then
+if [[ -z "$DISK_OVERRIDE" && "$INTERACTIVE_TTY" -eq 0 ]]; then
   FILTER_KIND="${INSTALL_DISK_FILTER,,}"
   if [[ "$FILTER_KIND" != "system" && "$FILTER_KIND" != "root" ]]; then
     UNOCCUPIED=$(printf "%s\n" "${DISK_LINES_ARR[@]}" | awk -F'|' '$8 == "0"')
@@ -78,10 +81,8 @@ fi
 
 DISK_COUNT=${#DISK_LINES_ARR[@]}
 SELECTED_LINE="${DISK_LINES_ARR[0]}"
-AUTO_SELECTED=1; USER_SELECTED=0; INTERACTIVE_TTY=0
+AUTO_SELECTED=1; USER_SELECTED=0
 SELECTION_SOURCE="single-candidate"
-
-[[ -t 0 && -t 1 && -r /dev/tty ]] && INTERACTIVE_TTY=1
 
 if (( DISK_COUNT > 1 )); then
   (( INTERACTIVE_TTY )) \

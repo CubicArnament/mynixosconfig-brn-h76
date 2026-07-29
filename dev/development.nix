@@ -1,5 +1,5 @@
 {
-  nixosModule = { ... }:
+  nixosModule = _:
   {
     # Let normal admin users work comfortably with flakes, dev shells and other
     # Nix developer workflows without falling back to root for everyday tasks.
@@ -11,7 +11,7 @@
     };
   };
 
-  homeModule = { ... }:
+  homeModule = _:
   {
     programs.direnv = {
       enable = true;

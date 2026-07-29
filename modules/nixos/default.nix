@@ -12,7 +12,7 @@
 # Хост-специфичные вещи (hardware.nix, disko.nix, hostname, stateVersion)
 # НЕ здесь — они остаются в configuration.nix хоста.
 
-{ ... }:
+_:
 {
   imports = [
     # Мета — должна быть первой: объявляет options.machine.*

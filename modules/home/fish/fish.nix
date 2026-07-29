@@ -22,11 +22,11 @@
         # fzf-fish: fuzzy autocomplete для файлов, истории, переменных,
         # процессов и git log прямо в fish (Ctrl+R и др.)
         name = "fzf-fish";
-        src = pkgs.fishPlugins.fzf-fish.src;
+        inherit (pkgs.fishPlugins.fzf-fish) src;
       }
     ];
   };
 
   # fzf нужен как runtime зависимость для fzf-fish
-  home.packages = [ pkgs.fzf ];
+  home.packages = with pkgs; [ fzf ];
 }

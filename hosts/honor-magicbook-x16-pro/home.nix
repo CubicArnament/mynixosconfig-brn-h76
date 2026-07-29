@@ -12,9 +12,8 @@
 
   home = {
     username = user.name;
-    homeDirectory = user.homeDirectory;
     stateVersion = user.homeStateVersion;
-    sessionVariables = user.sessionVariables;
+    inherit (user) homeDirectory sessionVariables;
   };
 
   programs.home-manager.enable = true;
