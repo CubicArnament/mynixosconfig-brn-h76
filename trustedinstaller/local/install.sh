@@ -16,6 +16,12 @@ if [[ -z "$HOST_NAME" || -z "$LOCAL_DEVICE_PATHS_REL" ]]; then
   exit 1
 fi
 
+if VIRTUALIZATION=$(systemd-detect-virt 2>/dev/null); then
+  printf "Refusing installation in virtualized environment: %s\n" "$VIRTUALIZATION" >&2
+  printf "Disk discovery and nix builds are allowed in VMs/WSL; installation requires the physical Honor laptop.\n" >&2
+  exit 2
+fi
+
 DISK_DEVICE=$(grep 'diskDevice' "$LOCAL_DEVICE_PATHS_REL" | sed 's/.*"\(.*\)".*/\1/')
 
 printf "\n"

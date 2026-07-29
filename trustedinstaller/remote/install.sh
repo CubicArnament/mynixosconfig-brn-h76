@@ -16,6 +16,12 @@ if [ -z "$HOST_NAME" ] || [ -z "$SSH_TARGET" ] || [ -z "$LOCAL_DEVICE_PATHS_REL"
   exit 1
 fi
 
+if VIRTUALIZATION=$(ssh "$SSH_TARGET" "systemd-detect-virt 2>/dev/null" 2>/dev/null); then
+  printf "Refusing installation on virtualized target %s: %s\n" "$SSH_TARGET" "$VIRTUALIZATION" >&2
+  printf "Disk discovery and nix builds are allowed in VMs/WSL; installation requires the physical Honor laptop.\n" >&2
+  exit 2
+fi
+
 DISK_DEVICE=$(grep 'diskDevice' "$LOCAL_DEVICE_PATHS_REL" | sed 's/.*"\(.*\)".*/\1/')
 
 printf "\n"

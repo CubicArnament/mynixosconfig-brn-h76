@@ -80,14 +80,13 @@ candidate_lines() {
   lsblk -dnpo PATH,TYPE,RM,RO,ROTA,TRAN,SIZE,MODEL 2>/dev/null | awk '
     NF >= 7 && $2=="disk" && $3=="0" && $4=="0" {
       path=$1; rota=$5; tran=$6; size=$7; model=""
-       for(i=8;i<=NF;i++) {
-         if (i == 8) model=$i
-         else model = model " " $i
-       }
-       if(path~/\/dev\/(loop|zram|ram|fd|sr|md|dm-)/) next
-       if (tran == "usb") next
-       if (tolower(model) ~ /(virtual disk|qemu|vmware|vbox|virtualbox)/) next
-       priority=0; class="unknown"
+      for(i=8;i<=NF;i++) {
+        if (i == 8) model=$i
+        else model = model " " $i
+      }
+      if(path~/\/dev\/(loop|zram|ram|fd|sr|md|dm-)/) next
+      if (tran == "usb") next
+      priority=0; class="unknown"
       if(path~/\/dev\/nvme[0-9]+n[0-9]+$/||tran=="nvme") { priority=300; class="nvme" }
       else if(rota=="0"&&(tran=="sata"||tran=="ata")) { priority=200; class="sata-ssd" }
       else if(rota=="0") { priority=150; class="solid-state" }
