@@ -19,10 +19,5 @@
   networking.hostName = hostName;
   time.timeZone = lib.mkForce "Europe/Moscow";
 
-  fileSystems."/" = {
-    device = "/dev/disk/by-label/NIXOS_ROOT";
-    fsType = "ext4";
-  };
-
   system.stateVersion = "26.05";
 }

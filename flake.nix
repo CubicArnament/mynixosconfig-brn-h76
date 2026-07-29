@@ -93,7 +93,10 @@
       ${honorHostName} = mkHost {
         hostName = honorHostName;
         localDevicePaths = honorLocalDevicePaths;
-        extraModules = [ disko.nixosModules.disko ];
+        extraModules = [
+          disko.nixosModules.disko
+          ./modules/nixos/disko/disko.nix
+        ];
       };
     };
   };
