@@ -1,6 +1,6 @@
 { pkgs }:
 let
-  ssh = import ./env.ssh;
+  sshKeys = (import ./env.ssh).authorizedKeys;
 in
 {
   name = "wkubearnament";
@@ -8,7 +8,7 @@ in
   homeDirectory = "/home/wkubearnament";
   shellPackage = pkgs.fish;
   extraGroups = [ "wheel" "networkmanager" "libvirtd" ];
-  sshAuthorizedKeys = ssh.authorizedKeys;
+  sshAuthorizedKeys = sshKeys;
 
   homeStateVersion = "26.05";
   sessionVariables = {
