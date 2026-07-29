@@ -1,4 +1,7 @@
 { pkgs, hostName, ... }:
+let
+  fzfFish = pkgs.fishPlugins.fzf-fish;
+in
 {
   programs.fish = {
     enable = true;
@@ -21,8 +24,8 @@
       {
         # fzf-fish: fuzzy autocomplete для файлов, истории, переменных,
         # процессов и git log прямо в fish (Ctrl+R и др.)
-        name = "fzf-fish";
-        inherit (pkgs.fishPlugins.fzf-fish) src;
+        name = fzfFish.pname;
+        inherit (fzfFish) src;
       }
     ];
   };
