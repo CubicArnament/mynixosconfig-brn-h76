@@ -32,10 +32,36 @@ else
   printf "fetch-remote.sh not found\n" >&2; exit 1
 fi
 
-RESULT=$(sh "$REMOTE_FETCH" "$DISK_OVERRIDE" "$CAMERA_OVERRIDE")
+if [[ -n "${FETCH_RESULT:-}" ]]; then
+  RESULT=$FETCH_RESULT
+else
+  RESULT=$(sh "$REMOTE_FETCH")
+fi
 
 mapfile -t DISK_LINES_ARR < <(printf "%s\n" "$RESULT" | grep '^DISK|' || true)
 CAMERA=$(printf "%s\n" "$RESULT" | awk -F'|' '/^CAMERA\|/ { sub(/^CAMERA\|/, "", $0); print; exit }')
+
+if [[ -n "$DISK_OVERRIDE" ]]; then
+  if [[ ! "$DISK_OVERRIDE" =~ ^/dev/disk/by-id/[A-Za-z0-9._+:-]+$ ]]; then
+    printf "Refusing unsafe disk override: %s\n" "$DISK_OVERRIDE" >&2
+    exit 2
+  fi
+  mapfile -t DISK_LINES_ARR < <(
+    printf "%s\n" "${DISK_LINES_ARR[@]}" | awk -F'|' -v disk="$DISK_OVERRIDE" '$3 == disk'
+  )
+  if [[ ${#DISK_LINES_ARR[@]} -eq 0 ]]; then
+    printf "Disk override is not a detected whole-disk by-id path: %s\n" "$DISK_OVERRIDE" >&2
+    exit 2
+  fi
+fi
+
+if [[ -n "$CAMERA_OVERRIDE" ]]; then
+  if [[ ! "$CAMERA_OVERRIDE" =~ ^/dev/v4l/by-(id|path)/[A-Za-z0-9._+:-]+$ ]]; then
+    printf "Refusing unsafe camera override: %s\n" "$CAMERA_OVERRIDE" >&2
+    exit 2
+  fi
+  CAMERA=$CAMERA_OVERRIDE
+fi
 
 if [[ ${#DISK_LINES_ARR[@]} -eq 0 ]]; then
   printf "No usable /dev/disk/by-id candidates detected locally.\n" >&2
@@ -112,8 +138,8 @@ elif (( DISK_COUNT > 1 && INTERACTIVE_TTY )); then
     printf "  [%s] %s  %s  %s  %s  %s\n" \
       "$(( i + 1 ))" "$byid" "$path" "$class" "$size" "$model" > /dev/tty
   done
-  printf "Select disk [1] within 20s, or wait for auto-select: " > /dev/tty
-  CHOICE=""; IFS= read -r -t 20 CHOICE < /dev/tty || true
+  printf "Select disk (required): " > /dev/tty
+  CHOICE=""; IFS= read -r CHOICE < /dev/tty || true
   if [[ "$CHOICE" =~ ^[0-9]+$ ]]; then
     IDX=$(( CHOICE - 1 ))
     if (( IDX >= 0 && IDX < DISK_COUNT )); then
@@ -123,9 +149,24 @@ elif (( DISK_COUNT > 1 && INTERACTIVE_TTY )); then
   fi
 fi
 
+if (( DISK_COUNT > 1 && AUTO_SELECTED )); then
+  printf "Multiple disks require an explicit selection via the menu or INSTALL_DISK_INDEX.\n" >&2
+  exit 2
+fi
+
 IFS='|' read -r _ _priority DISK DISK_REAL DISK_CLASS DISK_SIZE DISK_MODEL \
   DISK_OCCUPIED DISK_ROOT_BACKING DISK_OCCUPANCY_REASONS \
   DISK_MOUNT_SUMMARY DISK_HOLDER_SUMMARY <<< "$SELECTED_LINE"
+
+if [[ ! "$DISK" =~ ^/dev/disk/by-id/[A-Za-z0-9._+:-]+$ ]]; then
+  printf "Refusing unsafe disk path: %s\n" "$DISK" >&2
+  exit 2
+fi
+
+if [[ -n "$CAMERA" && ! "$CAMERA" =~ ^/dev/v4l/by-(id|path)/[A-Za-z0-9._+:-]+$ ]]; then
+  printf "Refusing unsafe camera path: %s\n" "$CAMERA" >&2
+  exit 2
+fi
 
 mkdir -p "$(dirname "$OUT")"
 {

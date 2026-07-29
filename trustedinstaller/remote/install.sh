@@ -22,6 +22,21 @@ if VIRTUALIZATION=$(ssh "$SSH_TARGET" "systemd-detect-virt 2>/dev/null" 2>/dev/n
   exit 2
 fi
 
+if ! ssh "$SSH_TARGET" "test -d /sys/firmware/efi"; then
+  printf "Refusing installation: target %s is not booted in UEFI mode.\n" "$SSH_TARGET" >&2
+  exit 2
+fi
+
+if ! ssh "$SSH_TARGET" "test \"\$(cat /sys/class/dmi/id/sys_vendor)\" = HONOR && test \"\$(cat /sys/class/dmi/id/product_name)\" = BRN-H76"; then
+  printf "Refusing installation: target %s is not an HONOR BRN-H76.\n" "$SSH_TARGET" >&2
+  exit 2
+fi
+
+if [ ! -t 0 ] && [ "${INSTALL_NONINTERACTIVE:-}" != "YES" ]; then
+  printf "Refusing non-interactive installation. Set INSTALL_NONINTERACTIVE=YES to opt in.\n" >&2
+  exit 2
+fi
+
 DISK_DEVICE=$(grep 'diskDevice' "$LOCAL_DEVICE_PATHS_REL" | sed 's/.*"\(.*\)".*/\1/')
 
 printf "\n"
@@ -40,13 +55,13 @@ if [ -t 0 ]; then
     printf "Aborted.\n" >&2; exit 3
   fi
 else
-  printf "Non-interactive: proceeding automatically.\n"
+  printf "Non-interactive installation explicitly approved.\n"
 fi
 
 printf "Running nixos-anywhere on %s...\n" "$SSH_TARGET"
 
 nix --extra-experimental-features "nix-command flakes" \
-  run github:nix-community/nixos-anywhere -- \
+  run .#nixos-anywhere -- \
   --flake ".#${HOST_NAME}" \
   "$SSH_TARGET"
 

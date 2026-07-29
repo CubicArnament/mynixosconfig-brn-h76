@@ -27,9 +27,14 @@
       url = "github:youwen5/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nixos-anywhere = {
+      url = "github:nix-community/nixos-anywhere";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = inputs@{ self, nixpkgs, disko, home-manager, nix-flatpak, ... }: let
+  outputs = inputs@{ self, nixpkgs, disko, home-manager, nix-flatpak, nixos-anywhere, ... }: let
     system = "x86_64-linux";
     pkgs = import nixpkgs { inherit system; };
 
@@ -91,6 +96,16 @@
         type = "app";
         program = "${installHonorMagicbook}/bin/install-honor-magicbook";
         meta.description = "Install NixOS on an Honor MagicBook X16 Pro";
+      };
+      disko-install = {
+        type = "app";
+        program = "${disko.packages.${system}.default}/bin/disko-install";
+        meta.description = "Install NixOS with the pinned disko input";
+      };
+      nixos-anywhere = {
+        type = "app";
+        program = "${nixos-anywhere.packages.${system}.default}/bin/nixos-anywhere";
+        meta.description = "Install NixOS remotely with the pinned nixos-anywhere input";
       };
       default = self.apps.${system}.install-honor-magicbook // {
         meta.description = "Install NixOS on an Honor MagicBook X16 Pro";

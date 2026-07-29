@@ -72,5 +72,6 @@
     inherit (user) description extraGroups;
     shell = user.shellPackage;
     home = user.homeDirectory;
+    openssh.authorizedKeys.keys = user.sshAuthorizedKeys;
   };
 }

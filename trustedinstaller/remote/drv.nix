@@ -30,7 +30,7 @@ pkgs.stdenvNoCC.mkDerivation {
 
     wrapProgram $out/bin/install-remote \
       --prefix PATH : ${pkgs.lib.makeBinPath (with pkgs; [
-        nix openssh
+        bash coreutils gnugrep gnused nix openssh util-linux
       ])}
   '';
 }

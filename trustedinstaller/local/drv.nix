@@ -25,7 +25,7 @@ pkgs.stdenvNoCC.mkDerivation {
 
     wrapProgram $out/bin/install-local \
       --prefix PATH : ${pkgs.lib.makeBinPath (with pkgs; [
-        bash nix
+        bash coreutils gnugrep gnused nix util-linux
       ])}
   '';
 }

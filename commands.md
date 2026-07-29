@@ -133,18 +133,14 @@ nix run .#install-honor-magicbook -- localhost > /dev/null
 
 ---
 
-### Сценарий 10 — Headless / CI (неинтерактивный, без подтверждений)
+### Сценарий 10 — Headless / CI (явный выбор и подтверждение)
 
-Если stdin не TTY — скрипт автоматически пропускает все промпты и берёт первый кандидат:
-
-```bash
-echo "" | nix run .#install-honor-magicbook -- nixos@<ip>
-```
-
-Или через pipe в CI:
+При нескольких дисках обязательно выбери индекс. Destructive-установка без TTY
+требует отдельного явного opt-in:
 
 ```bash
-nix run .#install-honor-magicbook -- nixos@<ip> < /dev/null
+INSTALL_DISK_INDEX=1 INSTALL_NONINTERACTIVE=YES \
+  nix run .#install-honor-magicbook -- nixos@<ip> < /dev/null
 ```
 
 ---
@@ -179,14 +175,14 @@ ssh nixos@<ip> "lsblk -dnpo NAME,TYPE,SIZE,MODEL,TRAN"
 1. Сортирует кандидаты: `NVMe > SATA SSD > прочий SSD > HDD`
 2. Игнорирует: `usb`, `loop`, `zram`, `md`, `dm-*`, `sr*`, `ram`, `fd`
 3. Предпочитает свободные диски (без mountpoints/holders/current-root)
-4. Интерактивное меню при нескольких кандидатах; 20 сек таймаут → первый кандидат
+4. Интерактивное меню при нескольких кандидатах; выбор обязателен
 5. Пишет `local-device-paths.nix` с `diskDevice` (by-id) и `cameraDevicePath`
 
 Поля в выводе фетча:
 
 | Поле | Что значит |
 |---|---|
-| `selectionSource` | `explicit-override` / `env-disk-index` / `interactive-menu` / `single-candidate` / `auto-timeout-or-default` / `auto-noninteractive` |
+| `selectionSource` | `explicit-override` / `env-disk-index` / `interactive-menu` / `single-candidate` |
 | `AUTOSELECTED` / `USERSELECTED` | был ли выбор автоматическим |
 | `diskOccupied` | диск занят (mountpoints / holders / current-root) |
 | `occupancyFilterApplied` | были ли отфильтрованы занятые диски |

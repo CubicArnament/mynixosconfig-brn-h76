@@ -22,6 +22,21 @@ if VIRTUALIZATION=$(systemd-detect-virt 2>/dev/null); then
   exit 2
 fi
 
+if [[ ! -d /sys/firmware/efi ]]; then
+  printf "Refusing installation: boot the NixOS ISO in UEFI mode.\n" >&2
+  exit 2
+fi
+
+if [[ "$(< /sys/class/dmi/id/sys_vendor)" != "HONOR" || "$(< /sys/class/dmi/id/product_name)" != "BRN-H76" ]]; then
+  printf "Refusing installation: this installer is restricted to HONOR BRN-H76.\n" >&2
+  exit 2
+fi
+
+if [[ ! -t 0 && "${INSTALL_NONINTERACTIVE:-}" != "YES" ]]; then
+  printf "Refusing non-interactive installation. Set INSTALL_NONINTERACTIVE=YES to opt in.\n" >&2
+  exit 2
+fi
+
 DISK_DEVICE=$(grep 'diskDevice' "$LOCAL_DEVICE_PATHS_REL" | sed 's/.*"\(.*\)".*/\1/')
 
 printf "\n"
@@ -38,7 +53,7 @@ if [[ -t 0 ]]; then
     printf "Aborted.\n" >&2; exit 3
   fi
 else
-  printf "Non-interactive: proceeding automatically.\n"
+  printf "Non-interactive installation explicitly approved.\n"
 fi
 
 printf "Running disko-install...\n"
@@ -46,7 +61,7 @@ printf "Running disko-install...\n"
 # disko-install = разметка диска + nixos-install в один шаг.
 # --disk main <device> переопределяет disko.devices.disk.main.device из CLI.
 nix --extra-experimental-features "nix-command flakes" \
-  run github:nix-community/disko/latest -- \
+  run .#disko-install -- \
   disko-install \
   --flake ".#${HOST_NAME}" \
   --disk main "$DISK_DEVICE"

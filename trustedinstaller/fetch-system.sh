@@ -35,9 +35,9 @@ case "$HOST" in
     exec bash "$LIBEXEC_DIR/local/fetch.sh" "$OUT" "$DISK_OVERRIDE" "$CAMERA_OVERRIDE"
     ;;
   *)
-    # shellcheck disable=SC2029
-    FETCH_RESULT=$(ssh "$HOST" "sh -s -- '$DISK_OVERRIDE' '$CAMERA_OVERRIDE'" \
-                    < "$LIBEXEC_DIR/remote/fetch.sh")
+    # Overrides are applied locally after receiving target candidates. Do not
+    # interpolate user input into the remote shell command.
+    FETCH_RESULT=$(ssh "$HOST" "sh -s" < "$LIBEXEC_DIR/remote/fetch.sh")
     export FETCH_RESULT
     exec bash "$LIBEXEC_DIR/local/fetch.sh" "$OUT" "$DISK_OVERRIDE" "$CAMERA_OVERRIDE"
     ;;
