@@ -1,6 +1,6 @@
 { pkgs }:
 let
-  ssh = import ./ssh.env;
+  ssh = import ./env.ssh;
 in
 {
   name = "wkubearnament";
