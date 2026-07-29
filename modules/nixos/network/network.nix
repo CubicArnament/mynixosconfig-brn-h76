@@ -39,14 +39,16 @@
   #   /lib/firmware/ath11k/WCN6855/hw2.0/
   # Уже включён через hardware.enableAllFirmware в hardware.nix,
   # но дублируем явно как документацию зависимости.
-  hardware.firmware = [ pkgs.linux-firmware ];
+  hardware = {
+    firmware = [ pkgs.linux-firmware ];
 
-  # Bluetooth через btusb / hci — Honor MagicBook X16 Pro использует
-  # встроенный BT от того же WCN685x чипа (combo WiFi+BT)
-  hardware.bluetooth = {
-    enable = true;
-    powerOnBoot = true;
-    settings.General.Experimental = true;
+    # Bluetooth через btusb / hci — Honor MagicBook X16 Pro использует
+    # встроенный BT от того же WCN685x чипа (combo WiFi+BT)
+    bluetooth = {
+      enable = true;
+      powerOnBoot = true;
+      settings.General.Experimental = true;
+    };
   };
 
   services.blueman.enable = true;

@@ -32,27 +32,28 @@
   i18n.defaultLocale = "ru_RU.UTF-8";
   console.useXkbConfig = true;
 
-  # ── SSH ─────────────────────────────────────────────────────────────────────
-  services.openssh.enable = true;
+  # ── Сервисы ─────────────────────────────────────────────────────────────────
+  services = {
+    openssh.enable = true;
 
-  # ── Клавиатура ──────────────────────────────────────────────────────────────
-  services.xserver.xkb = {
-    layout = "us,ru";
-    options = "grp:alt_shift_toggle";
+    xserver.xkb = {
+      layout = "us,ru";
+      options = "grp:alt_shift_toggle";
+    };
+
+    pipewire = {
+      enable = true;
+      pulse.enable = true;
+      alsa = {
+        enable = true;
+        support32Bit = true;
+      };
+      wireplumber.enable = true;
+    };
   };
 
   # ── Аудио: PipeWire ─────────────────────────────────────────────────────────
   security.rtkit.enable = true;  # нужен для real-time приоритета PipeWire
-
-  services.pipewire = {
-    enable = true;
-    pulse.enable = true;
-    alsa = {
-      enable = true;
-      support32Bit = true;
-    };
-    wireplumber.enable = true;
-  };
 
   # ── Wayland portal (screen sharing, file picker) ────────────────────────────
   xdg.portal = {

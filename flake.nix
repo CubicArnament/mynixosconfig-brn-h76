@@ -80,12 +80,16 @@
       fetch-target-device-paths = {
         type = "app";
         program = "${fetchTargetDevicePaths}/bin/fetch-target-device-paths";
+        meta.description = "Detect target disk and camera paths for installation";
       };
       install-honor-magicbook = {
         type = "app";
         program = "${installHonorMagicbook}/bin/install-honor-magicbook";
+        meta.description = "Install NixOS on an Honor MagicBook X16 Pro";
       };
-      default = self.apps.${system}.install-honor-magicbook;
+      default = self.apps.${system}.install-honor-magicbook // {
+        meta.description = "Install NixOS on an Honor MagicBook X16 Pro";
+      };
     };
 
     nixosConfigurations = {
