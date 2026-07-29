@@ -1,4 +1,4 @@
-{ pkgs, hostName, ... }:
+{ pkgs, ... }:
 let
   fzfFish = pkgs.fishPlugins.fzf-fish;
 in
@@ -12,10 +12,6 @@ in
       # файлам и переменным (Ctrl+R, Ctrl+Alt+F, Ctrl+V)
       fzf_configure_bindings --history=\cr --directory=\cf --variables=\cv
     '';
-    shellAliases = {
-      rebuild = "run0 nixos-rebuild switch --flake ~/.config/nixos#${hostName}";
-      update = "run0 nix flake update --flake ~/.config/nixos";
-    };
     plugins = [
       {
         name = "tide";
