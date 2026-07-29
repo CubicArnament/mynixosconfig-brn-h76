@@ -3,7 +3,6 @@ let
   workingPackages = with pkgs; [
     # Editors and browsers
     zed-editor
-    zen-browser
     microsoft-edge
 
     # Development and terminal tooling
