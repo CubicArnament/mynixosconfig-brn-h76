@@ -5,7 +5,7 @@
 #
 # Пользовательские переменные окружения (HSA_*, PYTORCH_*) — в modules/home/amd/rocm.nix.
 
-{ lib, pkgs, inputs, ... }:
+{ pkgs, inputs, ... }:
 {
   imports = [
     (inputs.nixos-hardware + "/common/gpu/amd")

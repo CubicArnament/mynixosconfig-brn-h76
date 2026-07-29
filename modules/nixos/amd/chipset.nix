@@ -7,7 +7,7 @@
 # Тайминги LPDDR5 из Linux изменить нельзя — только через BIOS.
 # Рекомендация по BIOS: UMA Frame Buffer Size = Auto или 512MB/1GB.
 
-{ lib, config, inputs, ... }:
+{ inputs, ... }:
 {
   imports = [
     (inputs.nixos-hardware + "/common/cpu/amd")

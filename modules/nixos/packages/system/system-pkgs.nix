@@ -12,4 +12,12 @@
     deadnix  # находит мёртвый код: неиспользуемые binding'и и аргументы
     statix   # находит антипаттерны и предлагает идиоматичные замены
   ];
+
+  programs.steam = {
+    enable = true;
+    extraCompatPackages = with pkgs; [
+      proton-ge-bin
+      steamtinkerlaunch
+    ];
+  };
 }
