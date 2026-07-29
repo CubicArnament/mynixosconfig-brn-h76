@@ -22,6 +22,11 @@
     # nix-flatpak v0.7.0 has no declared inputs of its own, so there is
     # nothing here to override with `follows`.
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=v0.7.0";
+
+    zen-browser = {
+      url = "github:youwen5/zen-browser-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{ self, nixpkgs, disko, home-manager, nix-flatpak, ... }: let

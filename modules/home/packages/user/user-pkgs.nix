@@ -1,9 +1,10 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 let
   workingPackages = with pkgs; [
     # Editors and browsers
     zed-editor
     microsoft-edge
+    inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
 
     # Development and terminal tooling
     opencode
