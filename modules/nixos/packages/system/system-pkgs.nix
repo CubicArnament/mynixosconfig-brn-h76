@@ -6,6 +6,7 @@
     openssh
     pciutils
     usbutils
+    v4l-utils
     nano
 
     # Nix linters

@@ -8,13 +8,15 @@
     # machine.fprint.enable = lib.mkForce true;  # включи вместе с fprint.nix
   ];
 
-  # Honor MagicBook X16 Pro — физический AMD ноутбук.
-  # machine.* автодетектируются из hardware.nix (boot.kernelModules).
-  # При необходимости переопредели через lib.mkForce:
-  #   machine.isVm     = lib.mkForce false;
-  #   machine.cpuVendor = lib.mkForce "amd";
-  #   machine.gpuVendor = lib.mkForce "amd";
-  #   machine.isLaptop  = lib.mkForce true;  # если battery/ac built-in в ядре
+  # BRN-H76 is a physical AMD Phoenix laptop. Do not rely on module-list
+  # detection: battery/AC support can be built into the kernel and be invisible
+  # in boot.kernelModules.
+  machine = {
+    isVm = lib.mkForce false;
+    cpuVendor = lib.mkForce "amd";
+    gpuVendor = lib.mkForce "amd";
+    isLaptop = lib.mkForce true;
+  };
 
   networking.hostName = hostName;
   time.timeZone = lib.mkForce "Europe/Moscow";

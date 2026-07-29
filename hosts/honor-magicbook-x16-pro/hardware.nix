@@ -25,8 +25,9 @@
     };
 
     kernelModules = [
-      # Integrated webcam — standard in-kernel UVC stack, no OEM driver needed.
-      # Explicit here so Howdy/webcam auth expectations are clear.
+      # The vendor does not publish the camera USB ID. uvcvideo is the generic
+      # in-kernel driver for UVC webcams; Howdy remains disabled unless the
+      # installer finds a stable /dev/v4l/by-id path on the physical laptop.
       "uvcvideo"
     ];
 
