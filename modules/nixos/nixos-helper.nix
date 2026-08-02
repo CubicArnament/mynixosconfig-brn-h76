@@ -17,24 +17,24 @@ in
         case "''${1:-switch}" in
           -h|--help)
             cat <<'EOF'
-            Usage: nixos-helper [command] [options]
+Usage: nixos-helper [command] [options]
 
-            Uses the configured host flake at /etc/nixos. System rebuilds also
-            activate the configured Home Manager user environment.
+Uses the configured host flake at /etc/nixos. System rebuilds also
+activate the configured Home Manager user environment.
 
-            Commands:
-              switch   Build and apply now. This is the default.
-              boot     Build now, activate on the next boot.
-              test     Build and activate until the next boot.
-              build    Build without activating.
-              update   Update flake.lock in /etc/nixos.
-              prefetch <url>
-                       Print a fetchurl SRI hash for dev/maintaining packages.
-              set-password
-                       Set the local password for wkubearnament.
+Commands:
+  switch   Build and apply now. This is the default.
+  boot     Build now, activate on the next boot.
+  test     Build and activate until the next boot.
+  build    Build without activating.
+  update   Update flake.lock in /etc/nixos.
+  prefetch <url>
+           Print a fetchurl SRI hash for dev/maintaining packages.
+  set-password
+           Set the local password for wkubearnament.
 
-            All nixos-rebuild options are passed through.
-            EOF
+All nixos-rebuild options are passed through.
+EOF
             ;;
           update)
             shift
@@ -50,10 +50,10 @@ in
               exit 2
             fi
             cat <<'EOF'
-            This sets the local password for wkubearnament.
-            Until a password exists, access is bootstrapped through the SSH key
-            configured in /etc/nixos/hosts/honor-magicbook-x16-pro/env.ssh.
-            EOF
+This sets the local password for wkubearnament.
+Until a password exists, access is bootstrapped through the SSH key
+configured in /etc/nixos/hosts/honor-magicbook-x16-pro/env.ssh.
+EOF
             exec passwd
             ;;
           *)
