@@ -27,7 +27,7 @@ _:
     ./btrfs/btrfs.nix
     ./bootloader/bootloader.nix
     ./kernel/kernel.nix
-    ./rebuild-helper.nix
+    ./nixos-helper.nix
 
     # Сеть
     ./network/network.nix

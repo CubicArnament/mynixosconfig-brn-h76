@@ -297,16 +297,16 @@ nix build .#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.topl
 На установленной системе, если репозиторий привязан к `/etc/nixos`:
 
 ```bash
-rebuild-helper
+nixos-helper
 ```
 
-Другие режимы: `rebuild-helper boot`, `rebuild-helper test`,
-`rebuild-helper build`. Справка: `rebuild-helper --help`.
+Другие режимы: `nixos-helper boot`, `nixos-helper test`,
+`nixos-helper build`. Справка: `nixos-helper --help`.
 
 ## Update flake inputs
 
 ```bash
-rebuild-helper update
+nixos-helper update
 ```
 
 `run0` требует аутентификации для группы `wheel`: пароль или Howdy (face auth).
