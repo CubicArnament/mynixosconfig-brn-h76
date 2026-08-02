@@ -32,9 +32,14 @@
       url = "github:nix-community/nixos-anywhere";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    zapret2-nix = {
+      url = "github:ZenonEl/zapret2-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = inputs@{ self, nixpkgs, disko, home-manager, nix-flatpak, nixos-anywhere, ... }: let
+  outputs = inputs@{ self, nixpkgs, disko, home-manager, nix-flatpak, nixos-anywhere, zapret2-nix, ... }: let
     system = "x86_64-linux";
     pkgs = import nixpkgs { inherit system; };
 
@@ -53,6 +58,7 @@
         modules = [
           home-manager.nixosModules.home-manager
           nix-flatpak.nixosModules.nix-flatpak
+          zapret2-nix.nixosModules.default
           ./hosts/${hostName}/configuration.nix
           {
             home-manager = {

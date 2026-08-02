@@ -21,5 +21,11 @@
   networking.hostName = hostName;
   time.timeZone = lib.mkForce "Europe/Moscow";
 
+  services.zapret2 = {
+    enable = true;
+    presets = [ "youtube" "discord" "general" ];
+    defaultPreset = "youtube";
+  };
+
   system.stateVersion = "26.05";
 }

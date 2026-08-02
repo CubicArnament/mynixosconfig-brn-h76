@@ -14,6 +14,7 @@
 - глобально разрешены `unfree` пакеты и firmware blobs
 - поддержка `nix develop` через `direnv` / `nix-direnv` и dev-friendly Nix settings
 - отдельные модули под `kernel`, `laptop`, `virtualization`, `fish`, `packages`
+- `zapret2` через systemd с переключаемыми пресетами YouTube, Discord и general
 
 ## Структура
 
@@ -96,3 +97,9 @@ hosts/honor-magicbook-x16-pro/local-device-paths.nix
 ## Команды
 
 Смотри: [commands.md](./commands.md)
+
+## Zapret2
+
+Сервис `zapret2` запускает `nfqws2` и правила `nftables` для обхода DPI.
+Доступные пресеты можно менять без пересборки: `sudo zapret2ctl switch <preset>`.
+Для подбора стратегии под текущего провайдера используется `sudo blockcheck2`.
