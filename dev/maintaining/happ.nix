@@ -23,6 +23,8 @@ stdenv.mkDerivation rec {
   ];
 
   dontUnpack = true;
+  # Happ ships its own Qt runtime, QML modules, and plugin paths.
+  dontWrapQtApps = true;
 
   installPhase = ''
     runHook preInstall
