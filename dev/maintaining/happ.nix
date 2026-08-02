@@ -1,4 +1,4 @@
-{ autoPatchelfHook, dpkg, fetchurl, fontconfig, freetype, libGL, libxcb, stdenv }:
+{ autoPatchelfHook, dpkg, e2fsprogs, fetchurl, fontconfig, freetype, libGL, libgpg-error, libxcb, qt6, stdenv }:
 
 stdenv.mkDerivation rec {
   pname = "happ";
@@ -11,7 +11,16 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [ dpkg autoPatchelfHook ];
   # The bundled Qt/QML plugins link against the GCC C++ runtime.
-  buildInputs = [ libGL libxcb fontconfig freetype stdenv.cc.cc.lib ];
+  buildInputs = [
+    libGL
+    libxcb
+    fontconfig
+    freetype
+    stdenv.cc.cc.lib
+    e2fsprogs
+    libgpg-error
+    qt6.qtwayland
+  ];
 
   dontUnpack = true;
 
