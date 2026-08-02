@@ -5,7 +5,6 @@ let
     zed-editor
     inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
     onlyoffice-desktopeditors
-    corefonts
 
     # Development and terminal tooling
     nodejs_22

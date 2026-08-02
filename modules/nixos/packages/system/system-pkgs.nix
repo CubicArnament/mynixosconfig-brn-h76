@@ -14,6 +14,8 @@
     statix   # находит антипаттерны и предлагает идиоматичные замены
   ];
 
+  fonts.packages = [ pkgs.corefonts ];
+
   programs.steam = {
     enable = true;
     extraCompatPackages =
