@@ -13,7 +13,8 @@ in
             cat <<'EOF'
             Usage: nixos-helper [command] [options]
 
-            Uses the configured host flake at /etc/nixos.
+            Uses the configured host flake at /etc/nixos. System rebuilds also
+            activate the configured Home Manager user environment.
 
             Commands:
               switch   Build and apply now. This is the default.
