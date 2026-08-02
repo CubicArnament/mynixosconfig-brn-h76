@@ -7,6 +7,7 @@ let
   # - Telegram: "org.telegram.desktop"
   flatpakPackages = [
     "com.usebottles.bottles"
+    "org.telegram.desktop"
   ];
 in
 {
