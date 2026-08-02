@@ -2,10 +2,6 @@
 {
   gtk = {
     enable = true;
-    theme = {
-      package = pkgs.nordic;
-      name = "Nordic-darker";
-    };
     iconTheme = {
       package = pkgs.papirus-icon-theme;
       name = "Papirus-Dark";
@@ -23,7 +19,6 @@
     settings = {
       "org/gnome/desktop/interface" = {
         color-scheme = "prefer-dark";
-        gtk-theme = "Nordic-darker";
         icon-theme = "Papirus-Dark";
         cursor-theme = "Bibata-Modern-Ice";
         show-battery-percentage = true;
@@ -67,7 +62,6 @@
 
       "org/gnome/desktop/wm/preferences" = {
         button-layout = "appmenu:minimize,maximize,close";
-        theme = "Nordic-darker";
       };
 
       "org/gnome/mutter" = {
@@ -102,18 +96,12 @@
           "dash-to-dock@micxgx.gmail.com"
           "just-perfection-desktop@just-perfection"
           "Vitals@CoreCoding.com"
-          "user-theme@gnome-shell-extensions.gcampax.github.com"
-          "touchpad-gesture-customization@coooolapps.com"
         ];
         favorite-apps = [
           "org.gnome.Nautilus.desktop"
           "org.gnome.Console.desktop"
           "org.gnome.Settings.desktop"
         ];
-      };
-
-      "org/gnome/shell/extensions/user-theme" = {
-        name = "Nordic-darker";
       };
 
       "org/gnome/shell/keybindings" = {

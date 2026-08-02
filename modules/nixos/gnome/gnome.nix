@@ -40,7 +40,5 @@ in
     gnomeExtensions.dash-to-dock
     gnomeExtensions.just-perfection
     gnomeExtensions.vitals
-    gnomeExtensions.user-themes
-    gnomeExtensions.touchpad-gesture-customization
   ];
 }

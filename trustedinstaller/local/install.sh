@@ -62,7 +62,6 @@ printf "Running disko-install...\n"
 # --disk main <device> переопределяет disko.devices.disk.main.device из CLI.
 nix --extra-experimental-features "nix-command flakes" \
   run .#disko-install -- \
-  disko-install \
   --flake ".#${HOST_NAME}" \
   --disk main "$DISK_DEVICE"
 

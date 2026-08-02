@@ -16,8 +16,9 @@
       enable = true;
       enable32Bit = true;
 
+      # ROCm runtime and OpenCL ICD only. Development libraries such as
+      # rocblas and hipblas are intentionally not installed.
       extraPackages = with pkgs; [
-        # ROCm CLR — OpenCL + HIP runtime для 780M
         rocmPackages.clr
         rocmPackages.clr.icd
       ];
@@ -34,8 +35,7 @@
       # OpenCL через ROCm CLR
       opencl.enable = true;
 
-      # Overdrive — разблокирует sysfs-интерфейс частот/напряжений для LACT
-      overdrive.enable = true;
+      overdrive.enable = false;
     };
   };
 
@@ -44,27 +44,18 @@
     "amdgpu.dc=1"
   ];
 
-  environment.variables = {
-    # RADV (Mesa) быстрее AMDVLK для gaming и rendering
-    AMD_VULKAN_ICD = "RADV";
+  environment.variables.ROCM_PATH = "/opt/rocm";
 
-    # gfx1103 (780M) официально не поддерживается ROCm.
-    # 11.0.0 = gfx1100 (RX 7900) — ближайший поддерживаемый таргет RDNA3.
-    HSA_OVERRIDE_GFX_VERSION = "11.0.0";
-
-    # /opt/rocm нужен программам с захардкоженными путями к HIP/ROCm
-    ROCM_PATH = "/opt/rocm";
-  };
-
-  # /opt/rocm симлинк — нужен PyTorch, llama.cpp ROCm backend и др.
+  # Some prebuilt ROCm applications still expect this conventional runtime
+  # location. Keep it limited to CLR rather than a full ROCm SDK tree.
   systemd.tmpfiles.rules =
     let
-      rocmEnv = pkgs.symlinkJoin {
-        name = "rocm-combined";
-        paths = with pkgs.rocmPackages; [ rocblas hipblas clr ];
+      rocmRuntime = pkgs.symlinkJoin {
+        name = "rocm-runtime";
+        paths = [ pkgs.rocmPackages.clr ];
       };
     in [
-      "L+ /opt/rocm - - - - ${rocmEnv}"
+      "L+ /opt/rocm - - - - ${rocmRuntime}"
       "L+ /opt/amdgpu/share/libdrm/amdgpu.ids - - - - ${pkgs.libdrm}/share/libdrm/amdgpu.ids"
     ];
 

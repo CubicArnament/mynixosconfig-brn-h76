@@ -294,19 +294,19 @@ nix build .#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.topl
 
 ## Rebuild
 
-На установленной системе, если flake лежит в `~/.config/nixos`:
+На установленной системе, если репозиторий привязан к `/etc/nixos`:
 
 ```bash
-run0 nixos-rebuild switch --flake ~/.config/nixos#honor-magicbook-x16-pro
+rebuild-helper
 ```
 
-> Имя пользователя и домашний путь централизованно задаются в
-> `hosts/honor-magicbook-x16-pro/user.nix`.
+Другие режимы: `rebuild-helper boot`, `rebuild-helper test`,
+`rebuild-helper build`. Справка: `rebuild-helper --help`.
 
 ## Update flake inputs
 
 ```bash
-run0 nix flake update --flake ~/.config/nixos
+rebuild-helper update
 ```
 
 `run0` требует аутентификации для группы `wheel`: пароль или Howdy (face auth).

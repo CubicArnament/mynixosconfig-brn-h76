@@ -10,8 +10,6 @@ in
     # Убирает зависание на инициализации несуществующих legacy COM-портов
     "8250.nr_uarts=0"
 
-    # Запрещает глубокие APST power states у NVMe — убирает resume-задержки
-    "nvme_core.default_ps_max_latency_us=0"
   ] ++ lib.optionals (!cfg.isVm) [
     # s2idle актуален только на физическом железе
     "mem_sleep_default=s2idle"

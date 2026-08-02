@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 {
   environment.systemPackages = with pkgs; [
     curl
@@ -16,9 +16,8 @@
 
   programs.steam = {
     enable = true;
-    extraCompatPackages = with pkgs; [
-      proton-ge-bin
-      steamtinkerlaunch
-    ];
+    extraCompatPackages =
+      lib.optionals (builtins.hasAttr "proton-ge-bin" pkgs) [ pkgs."proton-ge-bin" ]
+      ++ lib.optionals (builtins.hasAttr "steamtinkerlaunch" pkgs) [ pkgs.steamtinkerlaunch ];
   };
 }

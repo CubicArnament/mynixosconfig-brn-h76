@@ -18,18 +18,13 @@ CAMERA_OVERRIDE="${3:-}"
 INSTALL_DISK_FILTER="${INSTALL_DISK_FILTER:-}"
 INSTALL_DISK_INDEX="${INSTALL_DISK_INDEX:-}"
 
-# В store скрипты лежат рядом в одной папке (bin/ или libexec/)
-# В репо — в local/
+# In the packaged installer local/ and remote/ are sibling directories.
+# In the repository this script also lives in trustedinstaller/local/.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# В store скрипт в libexec/local/, remote/fetch.sh — в libexec/remote/
-# В репо (trustedinstaller/local/) — ../remote/fetch.sh
 if [[ -f "$SCRIPT_DIR/../remote/fetch.sh" ]]; then
   REMOTE_FETCH="$SCRIPT_DIR/../remote/fetch.sh"
-elif [[ -f "$SCRIPT_DIR/fetch-remote.sh" ]]; then
-  # fallback: рядом в одной папке (store без подпапок)
-  REMOTE_FETCH="$SCRIPT_DIR/fetch-remote.sh"
 else
-  printf "fetch-remote.sh not found\n" >&2; exit 1
+  printf "remote/fetch.sh not found\n" >&2; exit 1
 fi
 
 if [[ -n "${FETCH_RESULT:-}" ]]; then
@@ -73,6 +68,12 @@ OCCUPANCY_FILTER_APPLIED=0
 INTERACTIVE_TTY=0
 
 [[ -t 0 && -t 1 && -r /dev/tty ]] && INTERACTIVE_TTY=1
+
+if (( ORIGINAL_DISK_COUNT > 1 && INTERACTIVE_TTY == 0 )) \
+  && [[ -z "$DISK_OVERRIDE" && -z "$INSTALL_DISK_INDEX" ]]; then
+  printf "Multiple disks require INSTALL_DISK_INDEX in non-interactive mode.\n" >&2
+  exit 2
+fi
 
 if [[ -n "$INSTALL_DISK_FILTER" && -z "$DISK_OVERRIDE" ]]; then
   FILTER_KIND="${INSTALL_DISK_FILTER,,}"

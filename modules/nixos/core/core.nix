@@ -34,7 +34,14 @@
 
   # ── Сервисы ─────────────────────────────────────────────────────────────────
   services = {
-    openssh.enable = true;
+    openssh = {
+      enable = true;
+      settings = {
+        PasswordAuthentication = false;
+        KbdInteractiveAuthentication = false;
+        AllowUsers = [ user.name ];
+      };
+    };
 
     xserver.xkb = {
       layout = "us,ru";

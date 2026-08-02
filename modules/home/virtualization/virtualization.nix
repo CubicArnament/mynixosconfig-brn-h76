@@ -1,10 +1,8 @@
 { pkgs, ... }:
 {
   home.packages = with pkgs; [
-    quickemu
     qemu
     spice-gtk
-    virtio-win
     virt-manager
     virt-viewer
     virglrenderer
