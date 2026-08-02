@@ -10,7 +10,8 @@ stdenv.mkDerivation rec {
   };
 
   nativeBuildInputs = [ dpkg autoPatchelfHook ];
-  buildInputs = [ libGL libxcb fontconfig freetype ];
+  # The bundled Qt/QML plugins link against the GCC C++ runtime.
+  buildInputs = [ libGL libxcb fontconfig freetype stdenv.cc.cc.lib ];
 
   dontUnpack = true;
 
