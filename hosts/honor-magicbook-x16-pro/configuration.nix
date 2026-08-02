@@ -25,6 +25,7 @@
     enable = true;
     presets = [ "youtube" "discord" "general" ];
     defaultPreset = "youtube";
+    firewall.ports.udp = [ "443" "50000-65535" ];
   };
 
   system.stateVersion = "26.05";
