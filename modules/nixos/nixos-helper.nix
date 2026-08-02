@@ -4,7 +4,7 @@ let
   prefetchMaintaining = pkgs.writeShellApplication {
     name = "nix-prefetch-maintaining";
     runtimeInputs = [ pkgs.jq pkgs.nix ];
-    text = builtins.readFile ../../../dev/maintaining/prefetch-url.sh;
+    text = builtins.readFile ../../dev/maintaining/prefetch-url.sh;
   };
 in
 {
