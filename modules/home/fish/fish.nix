@@ -15,7 +15,7 @@ in
     plugins = [
       {
         name = "tide";
-        src = pkgs.fishPlugins.tide.src;
+        inherit (pkgs.fishPlugins.tide) src;
       }
       {
         # fzf-fish: fuzzy autocomplete для файлов, истории, переменных,
