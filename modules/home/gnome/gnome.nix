@@ -39,23 +39,18 @@
       };
 
       "org/gnome/desktop/peripherals/touchpad" = {
-        # Базовые настройки
         tap-to-click = true;
-        tap-and-drag = true;           # drag через tap, как на macOS
+        tap-and-drag = true;
         tap-and-drag-lock = false;
-        natural-scroll = true;         # "контентное" направление прокрутки, как на macOS
+        natural-scroll = true;
         two-finger-scrolling-enabled = true;
         edge-scrolling-enabled = false;
-        click-method = "fingers";      # два пальца = правый клик, как на macOS
+        click-method = "fingers";
         disable-while-typing = true;
         send-events = "enabled";
-        speed = 0.2;                   # чуть ниже для точности, как на macOS
+        speed = 0.2;
       };
 
-      # Жесты тачпада — macOS-style через Mutter
-      # 3 пальца вверх  → Activities Overview (как Exposé / Mission Control)
-      # 3 пальца влево/вправо → переключение окон (как Mission Control swipe)
-      # 4 пальца влево/вправо → переключение рабочих столов (как Space switching)
       "org/gnome/mutter/gestures" = {
         touch-points = 3;
       };
@@ -68,9 +63,6 @@
         dynamic-workspaces = true;
         edge-tiling = true;
         workspaces-only-on-primary = false;
-        # Включаем нативные жесты Mutter на Wayland
-        # 3 пальца вверх → Activities, влево/вправо → смена окон
-        # 4 пальца влево/вправо → смена рабочих столов
         experimental-features = [ "scale-monitor-framebuffer" ];
       };
 
@@ -79,10 +71,6 @@
         sleep-inactive-ac-type = "nothing";
         sleep-inactive-battery-type = "suspend";
 
-        # Автоматически включать power-saver при низком заряде батареи.
-        # GNOME + power-profiles-daemon: при заряде < PercentageLow (по умолчанию 20%
-        # в /etc/UPower/UPower.conf) профиль автоматически переключится на power-saver.
-        # Этот ключ появился в GNOME 41+ (gsettings-desktop-schemas >= 41).
         power-saver-profile-on-low-battery = true;
       };
 

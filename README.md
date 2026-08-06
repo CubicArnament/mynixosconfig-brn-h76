@@ -4,7 +4,7 @@
 
 ## Что внутри
 
-- `flake`-конфиг с `home-manager`, `disko`, `nixos-hardware`, `nix-flatpak`
+- `flake`-конфиг с `home-manager`, `disko`, `nixos-hardware`, `nix-flatpak`, `FlClashX-nix`
 - `Btrfs` layout через `disko` с отдельным `/.snapshots` subvolume для `Snapper`
 - `GNOME` + Home Manager
 - `PipeWire + WirePlumber + xdg-desktop-portal` для нормального Wayland screen sharing
@@ -29,7 +29,7 @@
 
 ## Установка
 
-Предполагаемый сценарий — через `nixos-anywhere` с Linux-машины или live-среды, а не с Windows.
+Локальная установка выполняется через `disko-install`, удалённая — через `nixos-anywhere`; запускать их нужно с Linux-машины или live-среды, а не с Windows.
 
 Zero-touch сценарий установки теперь завязан на flake app:
 
@@ -50,7 +50,7 @@ export NIX_CONFIG="experimental-features = nix-command flakes"
 hosts/honor-magicbook-x16-pro/local-device-paths.nix
 ```
 
-а потом сама запускает `nixos-anywhere`.
+а потом запускает `disko-install` для `localhost` или `nixos-anywhere` для удалённой цели.
 
 В логах скрипт явно печатает `AUTOSELECTED` / `USERSELECTED`, `interactiveTTY`
 и `selectionSource`, чтобы было видно, диск был выбран автоматически,

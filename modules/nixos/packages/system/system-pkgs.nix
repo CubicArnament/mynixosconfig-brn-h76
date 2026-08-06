@@ -9,9 +9,8 @@
     v4l-utils
     nano
 
-    # Nix linters
-    deadnix  # находит мёртвый код: неиспользуемые binding'и и аргументы
-    statix   # находит антипаттерны и предлагает идиоматичные замены
+    deadnix
+    statix
   ];
 
   fonts.packages = [ pkgs.corefonts ];

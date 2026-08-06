@@ -1,4 +1,3 @@
-# NixOS maintenance CLI and its supporting scripts.
 {
   bash,
   coreutils,

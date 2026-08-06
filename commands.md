@@ -202,7 +202,7 @@ ssh nixos@<ip> "lsblk -dnpo NAME,TYPE,SIZE,MODEL,TRAN"
 
 ## Сборка и проверка (WSL / другой NixOS)
 
-Все команды запускать из корня репо. Дерево грязное — закоммить или выставить `--impure`.
+Все команды запускать из корня репо. Изменения отслеживаемых файлов Git входят в source flake; новые файлы сначала добавь через `git add`.
 
 ### Полная сборка системы
 
@@ -274,20 +274,12 @@ nix build .#fetch-target-device-paths .#install-honor-magicbook
 
 ### Если дерево грязное (dirty tree)
 
-`nix build` на dirty git tree берёт файлы из последнего коммита, а не с диска.
-`local-device-paths.nix` трекается в git с заглушкой — поэтому сборка проходит.
-Изменения в других файлах нужно закоммитить перед сборкой:
+Git flake учитывает изменения уже отслеживаемых файлов рабочего дерева. Новые
+неотслеживаемые файлы не входят в source flake, пока их не добавить в индекс:
 
 ```bash
-git add -u && git commit -m "wip: test build"
+git add path/to/new-file
 nix build .#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.toplevel
-```
-
-Или использовать `--impure` (читает файлы с диска, игнорирует dirty):
-
-```bash
-nix build .#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.toplevel \
-  --impure
 ```
 
 ---

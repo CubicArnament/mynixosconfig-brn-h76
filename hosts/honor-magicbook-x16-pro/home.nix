@@ -6,7 +6,6 @@
     ../../modules/home/fish/fish.nix
     ../../modules/home/gnome/gnome.nix
     ../../modules/home/virtualization/virtualization.nix
-    # ../../modules/home/cncf/cncf.nix  # helm + kubectl; включи если нужен cncf-тулинг
     ../../modules/home/packages/user/user-pkgs.nix
   ];
 

@@ -1,10 +1,6 @@
 { lib, config, cameraDevicePath ? "", ... }:
 let
   cfg = config.machine;
-  # Howdy отключается если:
-  # - VM (нет вебкамеры)
-  # - fprint включён (конфликт двух биометрий в PAM стеке)
-  # - cameraDevicePath пустой (камера не обнаружена при fetch-target-device-paths)
   enableHowdy = !cfg.isVm && !cfg.fprint.enable && cameraDevicePath != "";
 in
 {
@@ -15,19 +11,16 @@ in
     };
 
     services = lib.mkIf enableHowdy {
-      # Face auth for run0. Password remains available as fallback.
       systemd-run0 = {
         howdy.enable = true;
         howdy.control = "sufficient";
       };
 
-      # Face auth for GDM/login. Password remains available as fallback.
       login = {
         howdy.enable = true;
         howdy.control = "sufficient";
       };
 
-      # Face auth for GUI privilege elevation dialogs.
       polkit-1 = {
         howdy.enable = true;
         howdy.control = "sufficient";

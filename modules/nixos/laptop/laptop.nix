@@ -6,19 +6,13 @@ let
   fnLockDefault = 1;
 in
 {
-  # powerManagement живёт в modules/nixos/power/power.nix.
-  # AMD/Intel CPU-специфика (kvm_amd nested, updateMicrocode) — в modules/nixos/amd/chipset.nix.
-  # cpuFreqGovernor намеренно не выставляется: при amd_pstate=active PPD управляет
-  # EPP/platform_profile напрямую — governor не нужен и конфликтует с ним.
 
-  # Intel nested KVM — AMD вариант живёт в chipset.nix
   boot.extraModprobeConfig = lib.mkIf (!cfg.isVm && cfg.cpuVendor == "intel") ''
     options kvm_intel nested=1
   '';
 
   hardware.cpu.intel.updateMicrocode = lib.mkIf (!cfg.isVm && cfg.cpuVendor == "intel") true;
 
-  # Huawei WMI: battery charge thresholds + fn-lock
   services.udev.extraRules = lib.mkIf (!cfg.isVm && cfg.isLaptop) ''
     ACTION=="add", SUBSYSTEM=="platform", KERNEL=="huawei-wmi", TAG+="systemd", ENV{SYSTEMD_WANTS}+="huawei-wmi-apply.service"
   '';

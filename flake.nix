@@ -19,14 +19,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # nix-flatpak v0.7.0 has no declared inputs of its own, so there is
-    # nothing here to override with `follows`.
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=v0.7.0";
 
     zen-browser = {
       url = "github:youwen5/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    flclashx.url = "github:CubicArnament/FlClashX-nix";
 
     nixos-anywhere = {
       url = "github:nix-community/nixos-anywhere";
@@ -43,11 +43,9 @@
     system = "x86_64-linux";
     pkgs = import nixpkgs { inherit system; };
 
-    # Общий user для всех хостов — имя/shell/home живут в user.nix
     user = import ./hosts/honor-magicbook-x16-pro/user.nix { inherit pkgs; };
     userName = user.name;
 
-    # Хелпер для сборки nixosConfiguration.
     mkHost = { hostName, extraModules ? [], localDevicePaths ? {} }:
       let
         sharedArgs = { inherit inputs hostName user userName; } // localDevicePaths;
@@ -71,7 +69,6 @@
         ] ++ extraModules;
       };
 
-    # Honor MagicBook — основной хост
     honorHostName = "honor-magicbook-x16-pro";
     honorLocalDevicePathsFile = ./hosts/${honorHostName}/local-device-paths.nix;
     honorLocalDevicePaths =
@@ -82,7 +79,6 @@
         cameraDevicePath = "";
       };
 
-    # Деривации вынесены в trustedinstaller/*.nix
     fetchTargetDevicePaths = pkgs.callPackage ./trustedinstaller/remote/drv.nix { };
     installHonorMagicbook  = pkgs.callPackage ./trustedinstaller/orchestrator-drv.nix { };
 
@@ -119,7 +115,6 @@
     };
 
     nixosConfigurations = {
-      # Honor MagicBook X16 Pro BRN-H76
       ${honorHostName} = mkHost {
         hostName = honorHostName;
         localDevicePaths = honorLocalDevicePaths;

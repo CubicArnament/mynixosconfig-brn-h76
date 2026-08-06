@@ -1,11 +1,4 @@
 #!/usr/bin/env bash
-# trustedinstaller/local/install.sh
-#
-# bash — локальная установка NixOS через disko-install.
-# Запускать с minimal NixOS ISO на целевом железе.
-#
-# Использование:
-#   install.sh <host-name> <local-device-paths-file>
 set -euo pipefail
 
 HOST_NAME="${1:-}"
@@ -37,7 +30,42 @@ if [[ ! -t 0 && "${INSTALL_NONINTERACTIVE:-}" != "YES" ]]; then
   exit 2
 fi
 
-DISK_DEVICE=$(grep 'diskDevice' "$LOCAL_DEVICE_PATHS_REL" | sed 's/.*"\(.*\)".*/\1/')
+DISK_DEVICE=$(
+  LC_ALL=C awk '
+    /^[[:space:]]*diskDevice[[:space:]]*=/ {
+      seen++
+      if ($0 !~ /^[[:space:]]*diskDevice[[:space:]]*=[[:space:]]*"\/dev\/disk\/by-id\/[A-Za-z0-9._+:-]+";[[:space:]]*$/) {
+        invalid = 1
+      }
+      value = $0
+      sub(/^[^"]*"/, "", value)
+      sub(/".*$/, "", value)
+    }
+    END {
+      if (seen != 1 || invalid) exit 1
+      print value
+    }
+  ' "$LOCAL_DEVICE_PATHS_REL"
+) || {
+  printf "Refusing invalid or ambiguous diskDevice in %s.\n" "$LOCAL_DEVICE_PATHS_REL" >&2
+  exit 2
+}
+
+if [[ ! "$DISK_DEVICE" =~ ^/dev/disk/by-id/[A-Za-z0-9._+:-]+$ ]]; then
+  printf "Refusing unsafe install disk path: %s\n" "$DISK_DEVICE" >&2
+  exit 2
+fi
+if [[ "${DISK_DEVICE##*/}" == *-part* ]]; then
+  printf "Refusing partition path as install disk: %s\n" "$DISK_DEVICE" >&2
+  exit 2
+fi
+
+DISK_REAL=$(readlink -f "$DISK_DEVICE" 2>/dev/null || true)
+if [[ ! -L "$DISK_DEVICE" || -z "$DISK_REAL" || ! -b "$DISK_REAL" \
+      || "$(lsblk -ndo TYPE "$DISK_REAL" 2>/dev/null)" != "disk" ]]; then
+  printf "Refusing diskDevice that is not a whole block disk: %s\n" "$DISK_DEVICE" >&2
+  exit 2
+fi
 
 printf "\n"
 printf "WARNING: ALL DATA ON THE FOLLOWING DISK WILL BE PERMANENTLY DESTROYED:\n"
@@ -58,8 +86,6 @@ fi
 
 printf "Running disko-install...\n"
 
-# disko-install = разметка диска + nixos-install в один шаг.
-# --disk main <device> переопределяет disko.devices.disk.main.device из CLI.
 nix --extra-experimental-features "nix-command flakes" \
   run .#disko-install -- \
   --flake ".#${HOST_NAME}" \

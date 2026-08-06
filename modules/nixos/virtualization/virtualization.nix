@@ -9,8 +9,6 @@ in
       package = pkgs.qemu_kvm;
       swtpm.enable = true;
       vhostUserPackages = [ pkgs.virtiofsd ];
-      # gl=1 требует GPU passthrough или virgl на хосте.
-      # В VM без passthrough вызовет падение гостей — отключаем.
       verbatimConfig = lib.mkIf (!cfg.isVm) ''
         namespaces = []
         gl = 1

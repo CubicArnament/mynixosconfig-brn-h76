@@ -10,7 +10,6 @@ stdenv.mkDerivation rec {
   };
 
   nativeBuildInputs = [ dpkg autoPatchelfHook ];
-  # The bundled Qt/QML plugins link against the GCC C++ runtime.
   buildInputs = [
     libGL
     libxcb
@@ -23,7 +22,6 @@ stdenv.mkDerivation rec {
   ];
 
   dontUnpack = true;
-  # Happ ships its own Qt runtime, QML modules, and plugin paths.
   dontWrapQtApps = true;
 
   installPhase = ''

@@ -1,17 +1,14 @@
 { lib, pkgs, inputs, ... }:
 let
-  flclashx = pkgs.callPackage ../../../../dev/maintaining/flclashx.nix { };
   happ = pkgs.callPackage ../../../../dev/maintaining/happ.nix { };
 
   workingPackages = with pkgs; [
-    # Editors and browsers
     zed-editor
     inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
     onlyoffice-desktopeditors
-    flclashx
+    inputs.flclashx.packages.${pkgs.stdenv.hostPlatform.system}.flclashx
     happ
 
-    # Development and terminal tooling
     nodejs_22
     pnpm
   ]

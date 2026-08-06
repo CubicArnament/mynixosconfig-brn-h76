@@ -1,11 +1,4 @@
 #!/usr/bin/env sh
-# trustedinstaller/remote/fetch.sh
-#
-# POSIX sh — детект дисков и камеры на целевой машине.
-# Передаётся на целевую машину через SSH pipe:
-#   ssh host "sh -s -- [disk-override] [camera-override]" < remote/fetch.sh
-#
-# Вывод: строки DISK|...|... и CAMERA|...
 set -eu
 
 find_disk_by_id() {

@@ -1,15 +1,4 @@
 #!/usr/bin/env bash
-# trustedinstaller/fetch-system.sh
-#
-# bash — оркестратор детекта дисков и камеры.
-# Только записывает local-device-paths.nix, ничего не устанавливает.
-#
-# Использование:
-#   fetch-target-device-paths <localhost|user@host> [output-file] [disk-override] [camera-override]
-#
-# Переменные окружения:
-#   INSTALL_DISK_FILTER  — фильтр диска (подстрока модели/класса, или "system"/"root")
-#   INSTALL_DISK_INDEX   — номер кандидата (1-based) если несколько дисков
 set -euo pipefail
 
 HOST="${1:-}"
@@ -35,8 +24,6 @@ case "$HOST" in
     exec bash "$LIBEXEC_DIR/local/fetch.sh" "$OUT" "$DISK_OVERRIDE" "$CAMERA_OVERRIDE"
     ;;
   *)
-    # Overrides are applied locally after receiving target candidates. Do not
-    # interpolate user input into the remote shell command.
     FETCH_RESULT=$(ssh "$HOST" "sh -s" < "$LIBEXEC_DIR/remote/fetch.sh")
     export FETCH_RESULT
     exec bash "$LIBEXEC_DIR/local/fetch.sh" "$OUT" "$DISK_OVERRIDE" "$CAMERA_OVERRIDE"

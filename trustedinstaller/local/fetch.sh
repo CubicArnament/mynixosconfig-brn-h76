@@ -1,15 +1,4 @@
 #!/usr/bin/env bash
-# trustedinstaller/local/fetch.sh
-#
-# bash — детект дисков и камеры локально, записывает local-device-paths.nix.
-# Запускать с live ISO на целевом железе.
-#
-# Использование:
-#   fetch.sh <output-file> [disk-override] [camera-override]
-#
-# Переменные окружения:
-#   INSTALL_DISK_FILTER  — фильтр (подстрока модели/класса, или "system"/"root")
-#   INSTALL_DISK_INDEX   — номер кандидата (1-based)
 set -euo pipefail
 
 OUT="${1:-hosts/honor-magicbook-x16-pro/local-device-paths.nix}"
@@ -18,8 +7,6 @@ CAMERA_OVERRIDE="${3:-}"
 INSTALL_DISK_FILTER="${INSTALL_DISK_FILTER:-}"
 INSTALL_DISK_INDEX="${INSTALL_DISK_INDEX:-}"
 
-# In the packaged installer local/ and remote/ are sibling directories.
-# In the repository this script also lives in trustedinstaller/local/.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ -f "$SCRIPT_DIR/../remote/fetch.sh" ]]; then
   REMOTE_FETCH="$SCRIPT_DIR/../remote/fetch.sh"

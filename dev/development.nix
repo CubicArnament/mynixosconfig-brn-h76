@@ -1,8 +1,6 @@
 {
   nixosModule = _:
   {
-    # Let normal admin users work comfortably with flakes, dev shells and other
-    # Nix developer workflows without falling back to root for everyday tasks.
     nix.settings = {
       allowed-users = [ "@wheel" ];
       trusted-users = [ "root" "@wheel" ];

@@ -1,20 +1,4 @@
 #!/usr/bin/env bash
-# trustedinstaller/install-system.sh
-#
-# bash — единая точка входа: фетч устройств + установка.
-#
-# Использование с live ISO:
-#   1. Загрузиться с NixOS minimal ISO
-#   2. Подключиться к wifi: nmtui  (или nmcli device wifi connect <SSID> password <pass>)
-#   3. git clone https://github.com/<you>/mynixosconfig && cd mynixosconfig
-#   4. nix run .#install-honor-magicbook -- localhost
-#
-# Использование для удалённой установки:
-#   nix run .#install-honor-magicbook -- nixos@192.168.1.x
-#
-# Переменные окружения:
-#   INSTALL_DISK_FILTER  — фильтр диска (подстрока модели/класса, или "system"/"root")
-#   INSTALL_DISK_INDEX   — номер кандидата (1-based) если несколько дисков
 set -euo pipefail
 
 HOST="${1:-}"
@@ -30,7 +14,6 @@ REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 cd "$REPO_ROOT"
 
 BIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# В store: bin/ и libexec/ соседи. В репо: trustedinstaller/ — всё рядом.
 if [[ -d "$BIN_DIR/../libexec" ]]; then
   LIBEXEC_DIR="$(cd "$BIN_DIR/../libexec" && pwd)"
 else
@@ -50,8 +33,6 @@ case "$HOST" in
     ;;
   *)
     printf "==> [remote] Detecting disks on %s...\n" "$HOST"
-    # Передаём remote/fetch.sh на целевую машину через SSH pipe,
-    # результат парсим локально через local/fetch.sh с FETCH_RESULT
     FETCH_RESULT=$(ssh "$HOST" "sh -s -- '' ''" < "$LIBEXEC_DIR/remote/fetch.sh")
     export FETCH_RESULT
     bash "$LIBEXEC_DIR/local/fetch.sh" "$LOCAL_DEVICE_PATHS_REL"

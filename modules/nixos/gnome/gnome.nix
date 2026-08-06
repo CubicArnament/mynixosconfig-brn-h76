@@ -14,7 +14,6 @@ in
       gnome.enable = true;
     };
 
-    # Huawei/Honor hotkeys — только на физическом Honor/Huawei железе.
     udev = lib.mkIf (!cfg.isVm) {
       extraHwdb = ''
         evdev:name:Huawei WMI hotkeys:*
