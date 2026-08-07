@@ -26,7 +26,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    flclashx.url = "github:CubicArnament/FlClashX-nix";
+    flclashx = {
+      url = "github:CubicArnament/FlClashX-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     nixos-anywhere = {
       url = "github:nix-community/nixos-anywhere";
@@ -81,11 +84,19 @@
 
     fetchTargetDevicePaths = pkgs.callPackage ./trustedinstaller/remote/drv.nix { };
     installHonorMagicbook  = pkgs.callPackage ./trustedinstaller/orchestrator-drv.nix { };
+    happ = pkgs.callPackage ./dev/maintaining/happ.nix { };
+    nixosHelper = pkgs.callPackage ./trustedinstaller/scripts/nixos-helper.d/drv.nix {
+      hostName = honorHostName;
+    };
 
   in {
     packages.${system} = {
-      inherit fetchTargetDevicePaths installHonorMagicbook;
+      inherit fetchTargetDevicePaths installHonorMagicbook happ nixosHelper;
       default = installHonorMagicbook;
+    };
+
+    checks.${system} = {
+      inherit happ nixosHelper;
     };
 
     apps.${system} = {

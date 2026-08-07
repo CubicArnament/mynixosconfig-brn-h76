@@ -8,7 +8,7 @@
 - `Btrfs` layout через `disko` с отдельным `/.snapshots` subvolume для `Snapper`
 - `GNOME` + Home Manager
 - `PipeWire + WirePlumber + xdg-desktop-portal` для нормального Wayland screen sharing
-- `GRUB` UEFI + `btrfsSupport` + холодная Nord/NixOS-стилизация
+- `GRUB` UEFI с поддержкой Btrfs + холодная Nord/NixOS-стилизация
 - `run0` вместо `sudo`, с обязательной аутентификацией для `wheel`
 - `Howdy` для face auth через веб-камеру
 - глобально разрешены `unfree` пакеты и firmware blobs
@@ -52,7 +52,7 @@ hosts/honor-magicbook-x16-pro/local-device-paths.nix
 
 а потом запускает `disko-install` для `localhost` или `nixos-anywhere` для удалённой цели.
 
-В логах скрипт явно печатает `AUTOSELECTED` / `USERSELECTED`, `interactiveTTY`
+В логах скрипт явно печатает `autoSelected` / `userSelected`, `interactiveTTY`
 и `selectionSource`, чтобы было видно, диск был выбран автоматически,
 через интерактивное меню, через env-based выбор или через явный override.
 
@@ -101,5 +101,5 @@ hosts/honor-magicbook-x16-pro/local-device-paths.nix
 ## Zapret2
 
 Сервис `zapret2` запускает `nfqws2` и правила `nftables` для обхода DPI.
-Доступные пресеты можно менять без пересборки: `sudo zapret2ctl switch <preset>`.
-Для подбора стратегии под текущего провайдера используется `sudo blockcheck2`.
+Доступные пресеты можно менять без пересборки: `run0 zapret2ctl switch <preset>`.
+Для подбора стратегии под текущего провайдера используется `run0 blockcheck2`.

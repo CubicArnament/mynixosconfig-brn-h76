@@ -30,6 +30,18 @@ stdenv.mkDerivation rec {
     mkdir -p $out/bin
     cp -r opt/ $out/
     ln -s $out/opt/happ/bin/Happ $out/bin/happ
+
+    if [ -d usr/share ]; then
+      cp -r usr/share $out/
+      if [ -d $out/share/applications ]; then
+        for desktopFile in $out/share/applications/*.desktop; do
+          [ -e "$desktopFile" ] || continue
+          substituteInPlace "$desktopFile" \
+            --replace-warn "/opt/happ/bin/Happ" "$out/bin/happ" \
+            --replace-warn "/opt/happ" "$out/opt/happ"
+        done
+      fi
+    fi
     runHook postInstall
   '';
 

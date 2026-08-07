@@ -183,9 +183,9 @@ ssh nixos@<ip> "lsblk -dnpo NAME,TYPE,SIZE,MODEL,TRAN"
 | Поле | Что значит |
 |---|---|
 | `selectionSource` | `explicit-override` / `env-disk-index` / `interactive-menu` / `single-candidate` |
-| `AUTOSELECTED` / `USERSELECTED` | был ли выбор автоматическим |
+| `autoSelected` / `userSelected` | был ли выбор автоматическим |
 | `diskOccupied` | диск занят (mountpoints / holders / current-root) |
-| `occupancyFilterApplied` | были ли отфильтрованы занятые диски |
+| `occupancyFiltered` | были ли отфильтрованы занятые диски |
 | `interactiveTTY` | запущен ли скрипт в интерактивном TTY |
 
 ---
@@ -308,6 +308,8 @@ nixos-helper update
 `zapret2` работает как системная служба, перехватывает подходящий трафик через
 `nftables`/NFQUEUE и применяет активную DPI-стратегию. В конфигурации доступны
 пресеты `youtube`, `discord` и `general`; активен только один из них.
+UDP ограничен портом `443` и диапазоном `50000-65535`, используемым Discord
+Voice: полный перехват `1-65535` создавал бы лишнюю нагрузку на NFQUEUE.
 
 ```bash
 # Статус службы и активный пресет

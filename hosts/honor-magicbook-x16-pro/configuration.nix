@@ -20,6 +20,8 @@
     enable = true;
     presets = [ "youtube" "discord" "general" ];
     defaultPreset = "youtube";
+    # Discord voice normally uses this high UDP range; intercepting all UDP
+    # would add unnecessary NFQUEUE overhead to unrelated applications.
     firewall.ports.udp = [ "443" "50000-65535" ];
   };
 

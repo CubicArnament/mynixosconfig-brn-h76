@@ -19,6 +19,8 @@ stdenvNoCC.mkDerivation {
   nativeBuildInputs = [ makeWrapper ];
 
   installPhase = ''
+    ${bash}/bin/bash -n nixos-helper.sh nix-prefetch-maintaining.sh
+
     mkdir -p $out/bin
     install -m 755 nixos-helper.sh $out/bin/nixos-helper
     install -m 755 nix-prefetch-maintaining.sh $out/bin/nix-prefetch-maintaining

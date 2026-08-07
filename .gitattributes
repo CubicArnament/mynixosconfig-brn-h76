@@ -1,0 +1,5 @@
+*.nix text eol=lf
+*.sh text eol=lf
+*.md text eol=lf
+*.ssh text eol=lf
+flake.lock text eol=lf
