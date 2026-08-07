@@ -67,17 +67,52 @@ if [[ ! -L "$DISK_DEVICE" || -z "$DISK_REAL" || ! -b "$DISK_REAL" \
   exit 2
 fi
 
+DISK_SIZE=$(lsblk -dnbo SIZE "$DISK_REAL" 2>/dev/null | tr -d '[:space:]')
+DISK_MODEL=$(lsblk -dnro MODEL "$DISK_REAL" 2>/dev/null | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+if [[ ! "$DISK_SIZE" =~ ^[0-9]+$ || "$DISK_SIZE" -lt 34359738368 ]]; then
+  printf "Refusing install disk smaller than 32 GiB: %s\n" "$DISK_DEVICE" >&2
+  exit 2
+fi
+
+OCCUPANCY_REASONS=()
+if lsblk -nrpo MOUNTPOINT "$DISK_REAL" 2>/dev/null | awk 'NF { found=1 } END { exit !found }'; then
+  OCCUPANCY_REASONS+=(mountpoints)
+fi
+while IFS= read -r NODE; do
+  [[ -n "$NODE" ]] || continue
+  HOLDER_DIR="/sys/class/block/$(basename "$NODE")/holders"
+  if [[ -d "$HOLDER_DIR" ]] && compgen -G "$HOLDER_DIR/*" > /dev/null; then
+    OCCUPANCY_REASONS+=(holders)
+    break
+  fi
+done < <(lsblk -nrpo PATH "$DISK_REAL" 2>/dev/null)
+ROOT_SOURCE=$(findmnt -n -o SOURCE / 2>/dev/null || true)
+ROOT_SOURCE=${ROOT_SOURCE%%\[*}
+if [[ -n "$ROOT_SOURCE" ]] && lsblk -snpo PATH,TYPE "$ROOT_SOURCE" 2>/dev/null \
+  | awk -v disk="$DISK_REAL" '$2 == "disk" && $1 == disk { found=1 } END { exit !found }'; then
+  OCCUPANCY_REASONS+=(current-root)
+fi
+if (( ${#OCCUPANCY_REASONS[@]} > 0 )) && [[ "${INSTALL_ALLOW_OCCUPIED_DISK:-}" != "YES" ]]; then
+  printf "Refusing occupied install disk (%s): %s\n" "$(IFS=,; printf '%s' "${OCCUPANCY_REASONS[*]}")" "$DISK_DEVICE" >&2
+  printf "For an intentional reinstall, re-run with INSTALL_ALLOW_OCCUPIED_DISK=YES.\n" >&2
+  exit 2
+fi
+
 printf "\n"
 printf "WARNING: ALL DATA ON THE FOLLOWING DISK WILL BE PERMANENTLY DESTROYED:\n"
 printf "  diskDevice = %s\n" "$DISK_DEVICE"
+printf "  realPath   = %s\n" "$DISK_REAL"
+printf "  model      = %s\n" "${DISK_MODEL:-unknown}"
+printf "  size       = %s bytes\n" "$DISK_SIZE"
 printf "  host       = %s\n" "$HOST_NAME"
 printf "  mode       = local (disko-install)\n"
 printf "\n"
 
-if [[ -t 0 ]]; then
-  printf "Type YES to confirm, anything else aborts: "
-  CONFIRM=""; IFS= read -r -t 30 CONFIRM || true
-  if [[ "${CONFIRM^^}" != "YES" ]]; then
+CONFIRM_TOKEN=${DISK_DEVICE##*/}
+if [[ -r /dev/tty && -w /dev/tty ]] && (: < /dev/tty) 2>/dev/null; then
+  printf "Type %s to confirm: " "$CONFIRM_TOKEN" > /dev/tty
+  CONFIRM=""; IFS= read -r -t 60 CONFIRM < /dev/tty || true
+  if [[ "$CONFIRM" != "$CONFIRM_TOKEN" ]]; then
     printf "Aborted.\n" >&2; exit 3
   fi
 else
@@ -86,9 +121,12 @@ fi
 
 printf "Running disko-install...\n"
 
-nix --extra-experimental-features "nix-command flakes" \
+if ! nix --extra-experimental-features "nix-command flakes" \
   run .#disko-install -- \
   --flake ".#${HOST_NAME}" \
-  --disk main "$DISK_DEVICE"
+  --disk main "$DISK_DEVICE"; then
+  printf "Installation failed; the selected disk may be partially modified. Do not reboot until the failure is resolved.\n" >&2
+  exit 1
+fi
 
 printf "\nDone. You can reboot now.\n"

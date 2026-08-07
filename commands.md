@@ -74,7 +74,7 @@ nix run .#install-honor-magicbook -- nixos@<ip>
 Когда несколько дисков и не хочешь полагаться на интерактивное меню:
 
 ```bash
-# Показать кандидатов без записи файла (localhost)
+# Выбрать первый кандидат и записать файл (localhost)
 INSTALL_DISK_INDEX=1 nix run .#fetch-target-device-paths -- localhost
 
 # Выбрать второй кандидат
@@ -95,7 +95,7 @@ INSTALL_DISK_FILTER=Samsung nix run .#fetch-target-device-paths -- nixos@<ip>
 # Второй NVMe если их несколько
 INSTALL_DISK_FILTER=nvme INSTALL_DISK_INDEX=2 nix run .#fetch-target-device-paths -- nixos@<ip>
 
-# Тот диск на котором сейчас стоит система (перезапись)
+# Тот диск, на котором сейчас стоит система (только детект)
 INSTALL_DISK_FILTER=system nix run .#fetch-target-device-paths -- nixos@<ip>
 ```
 
@@ -143,6 +143,10 @@ INSTALL_DISK_INDEX=1 INSTALL_NONINTERACTIVE=YES \
   nix run .#install-honor-magicbook -- nixos@<ip> < /dev/null
 ```
 
+Если выбран занятый или текущий системный диск, для намеренной переустановки
+дополнительно требуется `INSTALL_ALLOW_OCCUPIED_DISK=YES`. Перед разметкой
+установщик ещё раз проверит mountpoints, holders и backing disk корня.
+
 ---
 
 ### Сценарий 11 — Low-level fallback (голый nixos-anywhere)
@@ -150,7 +154,7 @@ INSTALL_DISK_INDEX=1 INSTALL_NONINTERACTIVE=YES \
 Если `install-honor-magicbook` недоступен и `local-device-paths.nix` уже заполнен вручную:
 
 ```bash
-nix run github:nix-community/nixos-anywhere -- \
+nix run .#nixos-anywhere -- \
   --flake .#honor-magicbook-x16-pro \
   nixos@<ip>
 ```
@@ -175,8 +179,9 @@ ssh nixos@<ip> "lsblk -dnpo NAME,TYPE,SIZE,MODEL,TRAN"
 1. Сортирует кандидаты: `NVMe > SATA SSD > прочий SSD > HDD`
 2. Игнорирует: `usb`, `loop`, `zram`, `md`, `dm-*`, `sr*`, `ram`, `fd`
 3. Предпочитает свободные диски (без mountpoints/holders/current-root)
-4. Интерактивное меню при нескольких кандидатах; выбор обязателен
+4. Интерактивное меню при нескольких кандидатах; выбор обязателен и показывает занятость
 5. Пишет `local-device-paths.nix` с `diskDevice` (by-id) и `cameraDevicePath`
+6. Перед стиранием повторно проверяет тип, размер и занятость выбранного диска
 
 Поля в выводе фетча:
 

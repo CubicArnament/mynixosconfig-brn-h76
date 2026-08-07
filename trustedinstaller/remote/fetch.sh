@@ -44,11 +44,9 @@ find_disk_by_id_any() {
 root_backing_disk() {
   root_source=$(findmnt -n -o SOURCE / 2>/dev/null || true)
   [ -n "$root_source" ] || return 0
+  root_source=${root_source%%\[*}
   root_real=$(readlink -f "$root_source" 2>/dev/null || printf "%s" "$root_source")
-  root_pkname=$(lsblk -ndo PKNAME "$root_real" 2>/dev/null | head -n 1 || true)
-  if [ -n "$root_pkname" ]; then printf "/dev/%s\n" "$root_pkname"; return 0; fi
-  root_type=$(lsblk -ndo TYPE "$root_real" 2>/dev/null | head -n 1 || true)
-  [ "$root_type" = "disk" ] && printf "%s\n" "$root_real"
+  lsblk -snpo PATH,TYPE "$root_real" 2>/dev/null | awk '$2 == "disk" { print $1; exit }'
 }
 
 disk_mount_summary() {
@@ -63,30 +61,31 @@ disk_holder_summary() {
     base=$(basename "$node")
     holder_dir="/sys/class/block/$base/holders"
     if [ -d "$holder_dir" ] && [ -n "$(ls -A "$holder_dir" 2>/dev/null || true)" ]; then
-      holders=$(ls "$holder_dir" 2>/dev/null | tr '\n' ',' | sed 's/,$//')
+      holders=$(find "$holder_dir" -mindepth 1 -maxdepth 1 -printf '%f\n' 2>/dev/null | tr '\n' ',' | sed 's/,$//')
       printf "%s:%s;" "$node" "$holders"
     fi
   done | sed 's/;$//'
 }
 
 candidate_lines() {
-  lsblk -dnpo PATH,TYPE,RM,RO,ROTA,TRAN,SIZE,MODEL 2>/dev/null | awk '
-    NF >= 7 && $2=="disk" && $3=="0" && $4=="0" {
-      path=$1; rota=$5; tran=$6; size=$7; model=""
-      for(i=8;i<=NF;i++) {
-        if (i == 8) model=$i
-        else model = model " " $i
-      }
-      if(path~/\/dev\/(loop|zram|ram|fd|sr|md|dm-)/) next
-      if (tran == "usb") next
-      priority=0; class="unknown"
-      if(path~/\/dev\/nvme[0-9]+n[0-9]+$/||tran=="nvme") { priority=300; class="nvme" }
-      else if(rota=="0"&&(tran=="sata"||tran=="ata")) { priority=200; class="sata-ssd" }
-      else if(rota=="0") { priority=150; class="solid-state" }
-      else if(rota=="1") { priority=100; class="hdd" }
-      printf "%s|%s|%s|%s|%s\n",priority,path,class,size,model
-    }
-  ' | sort -t"|" -k1,1nr -k2,2
+  lsblk -dnbpo PATH,TYPE,RM,RO,ROTA,SIZE 2>/dev/null |
+  while read -r path type rm ro rota size; do
+    [ "$type" = "disk" ] && [ "$rm" = "0" ] && [ "$ro" = "0" ] || continue
+    case "$path" in /dev/loop*|/dev/zram*|/dev/ram*|/dev/fd*|/dev/sr*|/dev/md*|/dev/dm-*) continue ;; esac
+
+    tran=$(lsblk -dnro TRAN "$path" 2>/dev/null | head -n 1 || true)
+    [ "$tran" != "usb" ] || continue
+    model=$(lsblk -dnro MODEL "$path" 2>/dev/null | head -n 1 | tr '|\n' '  ' | sed 's/[[:space:]][[:space:]]*/ /g; s/^ //; s/ $//' || true)
+
+    priority=0; class="unknown"
+    case "$path:$tran:$rota" in
+      /dev/nvme[0-9]*n[0-9]*:*:*|*:nvme:*) priority=300; class="nvme" ;;
+      *:sata:0|*:ata:0) priority=200; class="sata-ssd" ;;
+      *:*:0) priority=150; class="solid-state" ;;
+      *:*:1) priority=100; class="hdd" ;;
+    esac
+    printf "%s|%s|%s|%s|%s\n" "$priority" "$path" "$class" "$size" "$model"
+  done | sort -t"|" -k1,1nr -k2,2
 }
 
 emit_disk_candidates() {

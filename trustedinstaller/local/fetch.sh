@@ -54,12 +54,8 @@ ORIGINAL_DISK_COUNT=${#DISK_LINES_ARR[@]}
 OCCUPANCY_FILTER_APPLIED=0
 INTERACTIVE_TTY=0
 
-[[ -t 0 && -t 1 && -r /dev/tty ]] && INTERACTIVE_TTY=1
-
-if (( ORIGINAL_DISK_COUNT > 1 && INTERACTIVE_TTY == 0 )) \
-  && [[ -z "$DISK_OVERRIDE" && -z "$INSTALL_DISK_INDEX" ]]; then
-  printf "Multiple disks require INSTALL_DISK_INDEX in non-interactive mode.\n" >&2
-  exit 2
+if [[ -r /dev/tty && -w /dev/tty ]] && (: < /dev/tty) 2>/dev/null; then
+  INTERACTIVE_TTY=1
 fi
 
 if [[ -n "$INSTALL_DISK_FILTER" && -z "$DISK_OVERRIDE" ]]; then
@@ -82,7 +78,7 @@ if [[ -n "$INSTALL_DISK_FILTER" && -z "$DISK_OVERRIDE" ]]; then
   mapfile -t DISK_LINES_ARR <<< "$FILTERED"
 fi
 
-if [[ -z "$DISK_OVERRIDE" && "$INTERACTIVE_TTY" -eq 0 ]]; then
+if [[ -z "$DISK_OVERRIDE" ]]; then
   FILTER_KIND="${INSTALL_DISK_FILTER,,}"
   if [[ "$FILTER_KIND" != "system" && "$FILTER_KIND" != "root" ]]; then
     UNOCCUPIED=$(printf "%s\n" "${DISK_LINES_ARR[@]}" | awk -F'|' '$8 == "0"')
@@ -94,6 +90,13 @@ if [[ -z "$DISK_OVERRIDE" && "$INTERACTIVE_TTY" -eq 0 ]]; then
 fi
 
 DISK_COUNT=${#DISK_LINES_ARR[@]}
+
+if (( DISK_COUNT > 1 && INTERACTIVE_TTY == 0 )) \
+  && [[ -z "$DISK_OVERRIDE" && -z "$INSTALL_DISK_INDEX" ]]; then
+  printf "Multiple filtered disks require INSTALL_DISK_INDEX in non-interactive mode.\n" >&2
+  exit 2
+fi
+
 SELECTED_LINE="${DISK_LINES_ARR[0]}"
 AUTO_SELECTED=1; USER_SELECTED=0
 SELECTION_SOURCE="single-candidate"
@@ -122,9 +125,14 @@ elif [[ -n "$INSTALL_DISK_INDEX" ]]; then
 elif (( DISK_COUNT > 1 && INTERACTIVE_TTY )); then
   printf "Multiple install disk candidates found:\n" > /dev/tty
   for (( i = 0; i < DISK_COUNT; i++ )); do
-    IFS='|' read -r _ priority byid path class size model _ _ _ _ _ <<< "${DISK_LINES_ARR[$i]}"
-    printf "  [%s] %s  %s  %s  %s  %s\n" \
-      "$(( i + 1 ))" "$byid" "$path" "$class" "$size" "$model" > /dev/tty
+    IFS='|' read -r _ _ byid path class size model occupied _ reasons _ _ \
+      <<< "${DISK_LINES_ARR[$i]}"
+    status="free"
+    if [[ "$occupied" == "1" ]]; then
+      status="OCCUPIED:${reasons:-unknown}"
+    fi
+    printf "  [%s] %s  %s  %s  %s bytes  %s  [%s]\n" \
+      "$(( i + 1 ))" "$byid" "$path" "$class" "$size" "$model" "$status" > /dev/tty
   done
   printf "Select disk (required): " > /dev/tty
   CHOICE=""; IFS= read -r CHOICE < /dev/tty || true

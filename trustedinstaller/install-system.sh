@@ -23,6 +23,18 @@ fi
 HOST_NAME="honor-magicbook-x16-pro"
 LOCAL_DEVICE_PATHS_REL="hosts/${HOST_NAME}/local-device-paths.nix"
 
+if [[ ! -f flake.nix || ! -f "hosts/${HOST_NAME}/configuration.nix" ]]; then
+  printf "Refusing installation outside the expected NixOS repository: %s\n" "$REPO_ROOT" >&2
+  exit 2
+fi
+
+case "$HOST" in
+  -*|*[!A-Za-z0-9._:@%+-]*)
+    printf "Refusing unsafe host target: %s\n" "$HOST" >&2
+    exit 2
+    ;;
+esac
+
 case "$HOST" in
   localhost|127.0.0.1|::1)
     printf "==> [local] Detecting disks...\n"

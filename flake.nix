@@ -92,11 +92,13 @@
   in {
     packages.${system} = {
       inherit fetchTargetDevicePaths installHonorMagicbook happ nixosHelper;
+      fetch-target-device-paths = fetchTargetDevicePaths;
+      install-honor-magicbook = installHonorMagicbook;
       default = installHonorMagicbook;
     };
 
     checks.${system} = {
-      inherit happ nixosHelper;
+      inherit fetchTargetDevicePaths installHonorMagicbook happ nixosHelper;
     };
 
     apps.${system} = {

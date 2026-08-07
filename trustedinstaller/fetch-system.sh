@@ -12,6 +12,13 @@ if [[ -z "$HOST" ]]; then
   exit 1
 fi
 
+case "$HOST" in
+  -*|*[!A-Za-z0-9._:@%+-]*)
+    printf "Refusing unsafe host target: %s\n" "$HOST" >&2
+    exit 2
+    ;;
+esac
+
 BIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ -d "$BIN_DIR/../libexec" ]]; then
   LIBEXEC_DIR="$(cd "$BIN_DIR/../libexec" && pwd)"
