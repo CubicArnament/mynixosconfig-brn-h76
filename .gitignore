@@ -1,2 +1,4 @@
 hosts/honor-magicbook-x16-pro/local-device-paths.nix.example
 hosts/honor-magicbook-x16-pro/env.passwd
+hosts/honor-magicbook-x16-pro/env.hpasswd
+hosts/honor-magicbook-x16-pro/local-device-paths.nix

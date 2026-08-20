@@ -4,8 +4,8 @@ let
   
   # Import initial hashed password if file exists, otherwise null
   initialHashedPassword = 
-    if builtins.pathExists ./env.passwd
-    then builtins.readFile ./env.passwd
+    if builtins.pathExists ./env.hpasswd
+    then builtins.readFile ./env.hpasswd
     else null;
 in
 {

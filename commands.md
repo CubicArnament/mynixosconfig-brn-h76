@@ -2,7 +2,7 @@
 
 ## Установка
 
-Запускать **с Linux-машины / live ISO**, не с Windows.
+Запускать **только с NixOS ISO на целевом ноутбуке**, не с Windows и не по SSH.
 
 > Раз выставил в live-среде — больше не печатать каждый раз:
 > ```bash
@@ -10,72 +10,51 @@
 > ```
 > Все команды ниже написаны в короткой форме `nix run ...`
 > (без `--extra-experimental-features`).
-> Замени `nixos@<ip>` на реального пользователя и адрес целевой машины.
 
 ---
 
-### Сценарий 1 — Локальная установка с live ISO (один шаг)
+### Основной сценарий — Локальная установка с live ISO
 
 Загрузился с minimal ISO на ноуте, подключился к wifi (`nmtui`), склонировал репо:
 
 ```bash
-git clone https://github.com/<you>/mynixosconfig && cd mynixosconfig
+git clone https://github.com/CubicArnament/mynixosconfig-brn-h76 && cd mynixosconfig-brn-h76
 nix run .#install-honor-magicbook -- localhost
 ```
 
-Что происходит: детект дисков локально → выбор диска → `disko-install` (разметка + NixOS за один шаг).
+Что происходит:
+1. Автоматический детект и выбор диска → генерация `local-device-paths.nix`
+2. Интерактивный запрос начального пароля → генерация `env.hpasswd`
+3. Установка через `disko-install` (разметка + NixOS за один шаг)
 
----
-
-### Сценарий 2 — Удалённая установка через SSH (один шаг)
-
+**После перезагрузки немедленно смени пароль:**
 ```bash
-nix run .#install-honor-magicbook -- nixos@<ip>
+run0 passwd wkubearnament
 ```
 
-Что происходит: детект дисков на целевой машине через SSH → выбор диска → `nixos-anywhere`.
-
 ---
 
-### Сценарий 3 — Раздельно: сначала фетч, потом установка (localhost)
+### Раздельные команды (ручной контроль)
 
-Если хочешь проверить что запишется в `local-device-paths.nix` перед тем как жать на курок:
+Если хочешь проверить что запишется в файлы перед установкой:
 
 ```bash
-# Шаг 1: только детект — ничего не устанавливает
+# Шаг 1: только детект диска — ничего не устанавливает
 nix run .#fetch-target-device-paths -- localhost
 
 # Проверь результат
 cat hosts/honor-magicbook-x16-pro/local-device-paths.nix
 
-# Шаг 2: установка с уже готовым local-device-paths.nix
+# Шаг 2: только генерация хешированного пароля
+nix run .#gen-hpasswd
+
+# Проверь что файл создан (содержимое — yescrypt hash)
+ls -la hosts/honor-magicbook-x16-pro/env.hpasswd
+# Шаг 3: установка с уже готовыми файлами
 nix run .#install-honor-magicbook -- localhost
 ```
 
 ---
-
-### Сценарий 4 — Раздельно: сначала фетч, потом установка (remote)
-
-```bash
-# Шаг 1: только детект на удалённой машине
-nix run .#fetch-target-device-paths -- nixos@<ip>
-
-# Проверь результат
-cat hosts/honor-magicbook-x16-pro/local-device-paths.nix
-
-# Шаг 2: установка
-nix run .#install-honor-magicbook -- nixos@<ip>
-```
-
----
-
-### Сценарий 5 — Фетч с явным выбором диска (по индексу)
-
-Когда несколько дисков и не хочешь полагаться на интерактивное меню:
-
-```bash
-# Выбрать первый кандидат и записать файл (localhost)
-INSTALL_DISK_INDEX=1 nix run .#fetch-target-device-paths -- localhost
 
 # Выбрать второй кандидат
 INSTALL_DISK_INDEX=2 nix run .#fetch-target-device-paths -- nixos@<ip>
@@ -101,11 +80,17 @@ INSTALL_DISK_FILTER=system nix run .#fetch-target-device-paths -- nixos@<ip>
 
 ---
 
-### Сценарий 7 — Фетч с явным override диска и камеры
+### Дополнительные опции — Явный выбор диска
+
+Когда несколько дисков и не хочешь полагаться на автоматический выбор:
 
 ```bash
+# Выбрать первый кандидат
+INSTALL_DISK_INDEX=1 nix run .#fetch-target-device-paths -- localhost
+
+# Или явно указать конкретный диск
 nix run .#fetch-target-device-paths -- \
-  nixos@<ip> \
+  localhost \
   hosts/honor-magicbook-x16-pro/local-device-paths.nix \
   /dev/disk/by-id/nvme-SAMSUNG_... \
   /dev/v4l/by-id/usb-...-video-index0
@@ -113,64 +98,17 @@ nix run .#fetch-target-device-paths -- \
 
 ---
 
-### Сценарий 8 — Установка с подробными логами
+### Установка с подробными логами
 
 ```bash
 nix run .#install-honor-magicbook -- localhost 2>&1 | tee install.log
 ```
 
-```bash
-nix run .#install-honor-magicbook -- nixos@<ip> 2>&1 | tee install.log
-```
-
 ---
-
-### Сценарий 9 — Установка без логов (тихий режим)
-
-```bash
 nix run .#install-honor-magicbook -- localhost > /dev/null
 ```
 
 ---
-
-### Сценарий 10 — Headless / CI (явный выбор и подтверждение)
-
-При нескольких дисках обязательно выбери индекс. Destructive-установка без TTY
-требует отдельного явного opt-in:
-
-```bash
-INSTALL_DISK_INDEX=1 INSTALL_NONINTERACTIVE=YES \
-  nix run .#install-honor-magicbook -- nixos@<ip> < /dev/null
-```
-
-Если выбран занятый или текущий системный диск, для намеренной переустановки
-дополнительно требуется `INSTALL_ALLOW_OCCUPIED_DISK=YES`. Перед разметкой
-установщик ещё раз проверит mountpoints, holders и backing disk корня.
-
----
-
-### Сценарий 11 — Low-level fallback (голый nixos-anywhere)
-
-Если `install-honor-magicbook` недоступен и `local-device-paths.nix` уже заполнен вручную:
-
-```bash
-nix run .#nixos-anywhere -- \
-  --flake .#honor-magicbook-x16-pro \
-  nixos@<ip>
-```
-
----
-
-### Сценарий 12 — Проверка дисков вручную перед установкой
-
-```bash
-# На целевой машине
-lsblk -dnpo NAME,TYPE,SIZE,MODEL,TRAN
-ls -la /dev/disk/by-id/ | grep -v part
-
-# На удалённой через SSH
-ssh nixos@<ip> "lsblk -dnpo NAME,TYPE,SIZE,MODEL,TRAN"
-```
 
 ---
 

@@ -29,12 +29,13 @@
 
 ## Установка
 
-Локальная установка выполняется через `disko-install`, удалённая — через `nixos-anywhere`; запускать их нужно с Linux-машины или live-среды, а не с Windows.
+Установка выполняется **только локально** с прямым доступом к экрану и клавиатуре.
+Запускать установку нужно с NixOS ISO на целевом ноутбуке, а не с Windows и не по SSH.
 
-Zero-touch сценарий установки теперь завязан на flake app:
+Установка выполняется через flake app:
 
 ```bash
-nix --extra-experimental-features "nix-command flakes" run .#install-honor-magicbook -- wkubearnament@<target-host>
+nix --extra-experimental-features "nix-command flakes" run .#install-honor-magicbook -- localhost
 ```
 
 В live/minimal среде `nix-command` и `flakes` нередко выключены по умолчанию,
@@ -44,39 +45,34 @@ nix --extra-experimental-features "nix-command flakes" run .#install-honor-magic
 export NIX_CONFIG="experimental-features = nix-command flakes"
 ```
 
-Эта команда сначала автоматически генерирует локальный файл устройств:
+Эта команда автоматически:
 
-```text
-hosts/honor-magicbook-x16-pro/local-device-paths.nix
-```
+1. **Определяет диск установки** — генерирует локальный файл устройств:
+   ```text
+   hosts/honor-magicbook-x16-pro/local-device-paths.nix
+   ```
+   Скрипт явно печатает `autoSelected`/`userSelected`, `interactiveTTY` и `selectionSource`,
+   чтобы было видно, как именно был выбран диск.
 
-а потом запускает `disko-install` для `localhost` или `nixos-anywhere` для удалённой цели.
+2. **Запрашивает начальный пароль** — интерактивно создаёт хешированный пароль:
+   ```text
+   hosts/honor-magicbook-x16-pro/env.hpasswd
+   ```
+   Пароль используется **только для первого входа** после установки.
+   Его **необходимо немедленно сменить** командой `run0 passwd wkubearnament`.
 
-В логах скрипт явно печатает `autoSelected` / `userSelected`, `interactiveTTY`
-и `selectionSource`, чтобы было видно, диск был выбран автоматически,
-через интерактивное меню, через env-based выбор или через явный override.
-
-Для headless и серверных сценариев скрипт не выбирает диск автоматически:
-при нескольких кандидатах обязательно задай `INSTALL_DISK_INDEX`. Для запуска
-самой destructive-установки без TTY дополнительно требуется явное
-`INSTALL_NONINTERACTIVE=YES`.
-
-Скрипт также пытается не трогать уже занятые диски, если находит более безопасные
-свободные кандидаты: он учитывает `mountpoints`, `holders` и признак текущего
-`root`-диска. Специальные фильтры `INSTALL_DISK_FILTER=system` и
-`INSTALL_DISK_FILTER=root` позволяют, наоборот, прицельно выбрать текущий
-системный диск для переустановки. Занятый диск блокируется повторной проверкой
-непосредственно перед разметкой; намеренная переустановка требует отдельного
-`INSTALL_ALLOW_OCCUPIED_DISK=YES`.
+3. **Запускает установку** через `disko-install`.
 
 Важно: эта установка **разрушительная**. Выбранный install-диск будет размечен
 через `disko`, а существующие данные на нём будут уничтожены. Логика выбора диска
 в этом репозитории снижает риск ошибки, но не снимает с тебя ответственность за
 проверку целевого диска перед запуском установки.
 
-Файл нужен, чтобы не хардкодить `diskDevice` и `cameraDevicePath` в tracked-конфиге.
-Для install-диска здесь используется **`/dev/disk/by-id`**, а не `UUID`, потому что
+Для install-диска используется **`/dev/disk/by-id`**, а не `UUID`, потому что
 `disko` работает с **целым диском до создания файловых систем**.
+
+Файлы `local-device-paths.nix` и `env.hpasswd` не попадают в Git (`.gitignore`),
+но включаются в flake через `builtins.pathExists`.
 
 Самая важная особенность дисков:
 

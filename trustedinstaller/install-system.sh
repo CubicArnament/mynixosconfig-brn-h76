@@ -35,21 +35,23 @@ case "$HOST" in
     ;;
 esac
 
+HPASSWD_REL="hosts/${HOST_NAME}/env.hpasswd"
+
 case "$HOST" in
   localhost|127.0.0.1|::1)
     printf "==> [local] Detecting disks...\n"
     bash "$LIBEXEC_DIR/local/fetch.sh" "$LOCAL_DEVICE_PATHS_REL"
 
+    printf "\n==> [local] Generating initial password...\n"
+    bash "$LIBEXEC_DIR/local/gen-hpasswd.sh" "$HPASSWD_REL"
+
     printf "\n==> [local] Installing...\n"
     exec bash "$LIBEXEC_DIR/local/install.sh" "$HOST_NAME" "$LOCAL_DEVICE_PATHS_REL"
     ;;
   *)
-    printf "==> [remote] Detecting disks on %s...\n" "$HOST"
-    FETCH_RESULT=$(ssh "$HOST" "sh -s -- '' ''" < "$LIBEXEC_DIR/remote/fetch.sh")
-    export FETCH_RESULT
-    bash "$LIBEXEC_DIR/local/fetch.sh" "$LOCAL_DEVICE_PATHS_REL"
-
-    printf "\n==> [remote] Installing on %s...\n" "$HOST"
-    exec sh "$LIBEXEC_DIR/remote/install.sh" "$HOST_NAME" "$HOST" "$LOCAL_DEVICE_PATHS_REL"
+    printf "ERROR: Remote SSH installation is no longer supported.\n" >&2
+    printf "This installer requires direct physical access (keyboard and screen).\n" >&2
+    printf "Boot the NixOS ISO on the Honor MagicBook and run: nix run .#install-honor-magicbook -- localhost\n" >&2
+    exit 2
     ;;
 esac

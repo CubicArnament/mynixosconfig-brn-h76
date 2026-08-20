@@ -123,7 +123,7 @@ printf "\n"
 CONFIRM_TOKEN=${DISK_DEVICE##*/}
 if [[ -c /dev/tty && -r /dev/tty && -w /dev/tty ]] && (: < /dev/tty) 2>/dev/null; then
   printf "Type %s to confirm: " "$CONFIRM_TOKEN" > /dev/tty
-  CONFIRM=""; IFS= read -r -t 60 CONFIRM < /dev/tty || true
+  CONFIRM=""; IFS= read -r CONFIRM < /dev/tty || true
   if [[ "$CONFIRM" != "$CONFIRM_TOKEN" ]]; then
     printf "Aborted.\n" >&2; exit 3
   fi
@@ -161,3 +161,15 @@ if ! nix --extra-experimental-features "nix-command flakes" \
 fi
 
 printf "\nDone. You can reboot now.\n"
+printf "\n"
+printf "==============================================\n"
+printf "  CRITICAL: CHANGE YOUR PASSWORD IMMEDIATELY\n"
+printf "==============================================\n"
+printf "\n"
+printf "After reboot, login with the password you set during installation,\n"
+printf "then immediately change it:\n"
+printf "\n"
+printf "  run0 passwd wkubearnament\n"
+printf "\n"
+printf "The initial password from env.hpasswd is for first login only.\n"
+printf "\n"

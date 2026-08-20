@@ -82,8 +82,14 @@
         cameraDevicePath = "";
       };
 
+    honorHpasswdFile = ./hosts/${honorHostName}/env.hpasswd;
+    honorHpasswdExists = builtins.pathExists honorHpasswdFile;
+
     fetchTargetDevicePaths = pkgs.callPackage ./trustedinstaller/remote/drv.nix { };
     installHonorMagicbook  = pkgs.callPackage ./trustedinstaller/orchestrator-drv.nix { };
+    genHpasswd = pkgs.callPackage ./trustedinstaller/gen-hpasswd-drv.nix {
+      mkpasswd = pkgs.mkpasswd;
+    };
     happ = pkgs.callPackage ./dev/maintaining/happ.nix { };
     nixosHelper = pkgs.callPackage ./trustedinstaller/scripts/nixos-helper.d/drv.nix {
       hostName = honorHostName;
@@ -91,14 +97,15 @@
 
   in {
     packages.${system} = {
-      inherit fetchTargetDevicePaths installHonorMagicbook happ nixosHelper;
+      inherit fetchTargetDevicePaths installHonorMagicbook genHpasswd happ nixosHelper;
       fetch-target-device-paths = fetchTargetDevicePaths;
       install-honor-magicbook = installHonorMagicbook;
+      gen-hpasswd = genHpasswd;
       default = installHonorMagicbook;
     };
 
     checks.${system} = {
-      inherit fetchTargetDevicePaths installHonorMagicbook happ nixosHelper;
+      inherit fetchTargetDevicePaths installHonorMagicbook genHpasswd happ nixosHelper;
     };
 
     apps.${system} = {
@@ -106,6 +113,11 @@
         type = "app";
         program = "${fetchTargetDevicePaths}/bin/fetch-target-device-paths";
         meta.description = "Detect target disk and camera paths for installation";
+      };
+      gen-hpasswd = {
+        type = "app";
+        program = "${genHpasswd}/bin/gen-hpasswd";
+        meta.description = "Generate initial hashed password for installation";
       };
       install-honor-magicbook = {
         type = "app";
