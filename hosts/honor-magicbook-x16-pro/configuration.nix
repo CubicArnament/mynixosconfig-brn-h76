@@ -25,5 +25,20 @@
     firewall.ports.udp = [ "443" "50000-65535" ];
   };
 
+  # Ollama with ROCm support
+  services.ollama = {
+    enable = true;
+    acceleration = "rocm";
+    rocmOverrideGfx = "11.0.0"; # For Radeon 780M
+
+    environmentVariables = {
+      # Enable Flash Attention (required for KV cache quantization)
+      OLLAMA_FLASH_ATTENTION = "1";
+
+      # KV cache quantization: q8_0 (balanced) or q4_0 (max memory savings)
+      OLLAMA_KV_CACHE_TYPE = "q8_0";
+    };
+  };
+
   system.stateVersion = "26.05";
 }

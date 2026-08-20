@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 {
   home.sessionVariables = {
     HSA_OVERRIDE_GFX_VERSION = "11.0.0";
@@ -14,6 +14,10 @@
     AMD_VULKAN_ICD = "RADV";
 
     GGML_VK_VISIBLE_DEVICES = "0";
+
+    # Ollama optimizations
+    OLLAMA_FLASH_ATTENTION = "1";
+    OLLAMA_KV_CACHE_TYPE = "q8_0";
   };
 
   home.packages = with pkgs; [
@@ -21,5 +25,6 @@
     vulkan-tools
     rocmPackages.rocminfo
     rocmPackages.rocm-smi
+    ollama
   ];
 }
