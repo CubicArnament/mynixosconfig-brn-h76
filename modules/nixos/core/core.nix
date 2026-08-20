@@ -66,8 +66,9 @@
     shell = user.shellPackage;
     home = user.homeDirectory;
     openssh.authorizedKeys.keys = user.sshAuthorizedKeys;
-    # Initial password for console/TTY fallback authentication
-    # Change immediately after first login via: passwd
-    initialPassword = "changeme123";
+    # Initial hashed password for console/TTY fallback authentication
+    # Defined in hosts/*/user.nix, sourced from hosts/*/env.passwd
+    # This is ONLY used on user creation - passwd changes are NOT overridden
+    initialHashedPassword = user.initialHashedPassword;
   };
 }

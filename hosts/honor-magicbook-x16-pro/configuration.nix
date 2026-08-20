@@ -28,7 +28,7 @@
   # Ollama with ROCm support
   services.ollama = {
     enable = true;
-    acceleration = "rocm";
+    package = lib.mkDefault inputs.nixpkgs.legacyPackages.x86_64-linux.ollama-rocm;
     rocmOverrideGfx = "11.0.0"; # For Radeon 780M
 
     environmentVariables = {

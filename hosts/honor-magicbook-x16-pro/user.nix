@@ -1,6 +1,12 @@
 { pkgs }:
 let
   sshKeys = (import ./env.ssh).authorizedKeys;
+  
+  # Import initial hashed password if file exists, otherwise null
+  initialHashedPassword = 
+    if builtins.pathExists ./env.passwd
+    then builtins.readFile ./env.passwd
+    else null;
 in
 {
   name = "wkubearnament";
@@ -9,6 +15,7 @@ in
   shellPackage = pkgs.fish;
   extraGroups = [ "wheel" "networkmanager" "libvirtd" ];
   sshAuthorizedKeys = sshKeys;
+  inherit initialHashedPassword;
 
   homeStateVersion = "26.05";
   sessionVariables = {
