@@ -66,5 +66,8 @@
     shell = user.shellPackage;
     home = user.homeDirectory;
     openssh.authorizedKeys.keys = user.sshAuthorizedKeys;
+    # Initial password for console/TTY fallback authentication
+    # Change immediately after first login via: passwd
+    initialPassword = "changeme123";
   };
 }

@@ -96,6 +96,32 @@ hosts/honor-magicbook-x16-pro/local-device-paths.nix
 `hosts/honor-magicbook-x16-pro/user.nix`, чтобы не править это по нескольким
 местам сразу.
 
+## Первый вход после установки
+
+После завершения установки и перезагрузки:
+
+**SSH вход (основной метод):**
+```bash
+ssh wkubearnament@<ip-адрес>
+```
+
+SSH-ключ уже настроен в конфиге (`hosts/honor-magicbook-x16-pro/env.ssh`).
+
+**Console/TTY вход (fallback):**
+- Логин: `wkubearnament`
+- Пароль: `changeme123`
+
+**Первое что нужно сделать после входа:**
+```bash
+# Сменить временный пароль
+passwd
+
+# (Опционально) Настроить Howdy для face auth
+run0 howdy add
+```
+
+Временный пароль `changeme123` установлен только для возможности консольного входа, если SSH недоступен. После первого входа обязательно смени его через `passwd`.
+
 ## Команды
 
 Смотри: [commands.md](./commands.md)
