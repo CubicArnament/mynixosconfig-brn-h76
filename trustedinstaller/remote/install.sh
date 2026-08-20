@@ -116,7 +116,7 @@ printf "  mode       = remote (nixos-anywhere)\n"
 printf "\n"
 
 CONFIRM_TOKEN=${DISK_DEVICE##*/}
-if [ -r /dev/tty ] && [ -w /dev/tty ] && (: < /dev/tty) 2>/dev/null; then
+if [ -c /dev/tty ] && [ -r /dev/tty ] && [ -w /dev/tty ] && (: < /dev/tty) 2>/dev/null; then
   printf "Type %s to confirm: " "$CONFIRM_TOKEN" > /dev/tty
   CONFIRM=""
   IFS= read -r CONFIRM < /dev/tty || true
@@ -125,6 +125,27 @@ if [ -r /dev/tty ] && [ -w /dev/tty ] && (: < /dev/tty) 2>/dev/null; then
   fi
 else
   printf "Non-interactive installation explicitly approved.\n"
+fi
+
+if ! DISK_STATUS_FINAL=$(ssh -n "$SSH_TARGET" sh -s -- "$DISK_DEVICE" "$DISK_REAL" <<'EOF'
+disk=$1; expected_real=$2
+real=$(readlink -f "$disk" 2>/dev/null || true)
+[ "$real" = "$expected_real" ] || exit 1
+if lsblk -nrpo MOUNTPOINT "$real" 2>/dev/null | grep -q '[^[:space:]]'; then exit 2; fi
+for node in $(lsblk -nrpo PATH "$real" 2>/dev/null); do
+  holders="/sys/class/block/$(basename "$node")/holders"
+  if [ -d "$holders" ] && [ -n "$(ls -A "$holders" 2>/dev/null || true)" ]; then exit 3; fi
+done
+printf 'OK\n'
+EOF
+); then
+  case "$?" in
+    1) printf "CRITICAL: Disk symlink changed during confirmation. Aborting.\n" >&2 ;;
+    2) printf "CRITICAL: Disk became mounted during confirmation. Aborting.\n" >&2 ;;
+    3) printf "CRITICAL: Disk acquired holders during confirmation. Aborting.\n" >&2 ;;
+    *) printf "CRITICAL: Pre-install revalidation failed. Aborting.\n" >&2 ;;
+  esac
+  exit 2
 fi
 
 printf "Running nixos-anywhere on %s...\n" "$SSH_TARGET"

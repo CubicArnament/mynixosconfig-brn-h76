@@ -51,6 +51,14 @@ DISK_DEVICE=$(
   exit 2
 }
 
+if [[ "$DISK_DEVICE" == *"CONFIGURE-ME"* ]]; then
+  printf "CRITICAL: Placeholder disk device detected at runtime\n" >&2
+  exit 2
+fi
+if ! LC_ALL=C printf '%s' "${DISK_DEVICE##*/}" | grep -q '^[A-Za-z0-9._+:-]*$'; then
+  printf "Refusing disk path with non-ASCII characters: %s\n" "$DISK_DEVICE" >&2
+  exit 2
+fi
 if [[ ! "$DISK_DEVICE" =~ ^/dev/disk/by-id/[A-Za-z0-9._+:-]+$ ]]; then
   printf "Refusing unsafe install disk path: %s\n" "$DISK_DEVICE" >&2
   exit 2
@@ -71,6 +79,10 @@ DISK_SIZE=$(lsblk -dnbo SIZE "$DISK_REAL" 2>/dev/null | tr -d '[:space:]')
 DISK_MODEL=$(lsblk -dnro MODEL "$DISK_REAL" 2>/dev/null | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
 if [[ ! "$DISK_SIZE" =~ ^[0-9]+$ || "$DISK_SIZE" -lt 34359738368 ]]; then
   printf "Refusing install disk smaller than 32 GiB: %s\n" "$DISK_DEVICE" >&2
+  exit 2
+fi
+if [[ "$DISK_SIZE" -gt 10995116277760 ]]; then
+  printf "Refusing suspiciously large disk (>10TB): %s bytes\n" "$DISK_SIZE" >&2
   exit 2
 fi
 
@@ -109,7 +121,7 @@ printf "  mode       = local (disko-install)\n"
 printf "\n"
 
 CONFIRM_TOKEN=${DISK_DEVICE##*/}
-if [[ -r /dev/tty && -w /dev/tty ]] && (: < /dev/tty) 2>/dev/null; then
+if [[ -c /dev/tty && -r /dev/tty && -w /dev/tty ]] && (: < /dev/tty) 2>/dev/null; then
   printf "Type %s to confirm: " "$CONFIRM_TOKEN" > /dev/tty
   CONFIRM=""; IFS= read -r -t 60 CONFIRM < /dev/tty || true
   if [[ "$CONFIRM" != "$CONFIRM_TOKEN" ]]; then
@@ -118,6 +130,25 @@ if [[ -r /dev/tty && -w /dev/tty ]] && (: < /dev/tty) 2>/dev/null; then
 else
   printf "Non-interactive installation explicitly approved.\n"
 fi
+
+DISK_REAL_FINAL=$(readlink -f "$DISK_DEVICE" 2>/dev/null || true)
+if [[ "$DISK_REAL_FINAL" != "$DISK_REAL" ]]; then
+  printf "CRITICAL: Disk symlink changed during confirmation. Aborting.\n" >&2
+  exit 2
+fi
+
+if lsblk -nrpo MOUNTPOINT "$DISK_REAL" 2>/dev/null | awk 'NF { found=1 } END { exit !found }'; then
+  printf "CRITICAL: Disk became mounted during confirmation. Aborting.\n" >&2
+  exit 2
+fi
+while IFS= read -r NODE; do
+  [[ -n "$NODE" ]] || continue
+  HOLDER_DIR="/sys/class/block/$(basename "$NODE")/holders"
+  if [[ -d "$HOLDER_DIR" ]] && compgen -G "$HOLDER_DIR/*" > /dev/null; then
+    printf "CRITICAL: Disk acquired holders during confirmation. Aborting.\n" >&2
+    exit 2
+  fi
+done < <(lsblk -nrpo PATH "$DISK_REAL" 2>/dev/null)
 
 printf "Running disko-install...\n"
 

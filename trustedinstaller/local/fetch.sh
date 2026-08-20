@@ -65,6 +65,10 @@ if [[ -n "$INSTALL_DISK_FILTER" && -z "$DISK_OVERRIDE" ]]; then
       FILTERED=$(printf "%s\n" "${DISK_LINES_ARR[@]}" | awk -F'|' '$9 == "1"')
       ;;
     *)
+      if ! [[ "$INSTALL_DISK_FILTER" =~ ^[A-Za-z0-9._-]+$ ]]; then
+        printf "INSTALL_DISK_FILTER contains unsafe characters\n" >&2
+        exit 2
+      fi
       FILTERED=$(printf "%s\n" "${DISK_LINES_ARR[@]}" | awk -F'|' -v n="$INSTALL_DISK_FILTER" '
         BEGIN { nl = tolower(n) }
         { if (index(tolower($0), nl) > 0) print }

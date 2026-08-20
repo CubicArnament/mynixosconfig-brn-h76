@@ -300,13 +300,41 @@ nixos-helper
 Другие режимы: `nixos-helper boot`, `nixos-helper test`,
 `nixos-helper build`. Справка: `nixos-helper --help`.
 
-## Update flake inputs
+### Полезные команды nixos-helper
 
 ```bash
+# Обновить flake.lock
 nixos-helper update
+
+# Показать текущую и загруженную генерации
+nixos-helper status
+
+# Список последних генераций
+nixos-helper generations
+
+# Откатиться на предыдущую генерацию
+nixos-helper rollback
+
+# Удалить старые генерации (по умолчанию >7 дней)
+nixos-helper clean
+nixos-helper clean 14  # оставить только последние 14 дней
+
+# Показать разницу между текущей системой и новой конфигурацией
+nixos-helper diff
+
+# Настроить userspace разработку: создаёт symlink /etc/nixos → текущая директория
+# Позволяет редактировать конфиг без sudo, rebuild остаётся с повышением прав
+cd ~/mynixosconfig
+nixos-helper config-setup
+
+# Сгенерировать SRI hash для fetchurl в dev/maintaining пакетах
+nixos-helper prefetch https://example.com/file.tar.gz
+
+# Установить пароль для wkubearnament
+nixos-helper set-password
 ```
 
-`run0` требует аутентификации для группы `wheel`: пароль или Howdy (face auth).
+Команды, требующие root-прав, автоматически используют `run0` (systemd), `sudo` или `doas` в зависимости от доступности. Если ничего не найдено, nixos-helper попросит запустить его от имени root.
 
 ## Zapret2
 
