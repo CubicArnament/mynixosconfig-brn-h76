@@ -114,6 +114,8 @@ INSTALL_DISK_FILTER=system INSTALL_ALLOW_OCCUPIED_DISK=YES \
 
 Требуются оба runtime-файла.
 
+Для Bash/Zsh:
+
 ```bash
 FLAKE="path:$PWD"
 HOST="honor-magicbook-x16-pro"
@@ -134,6 +136,19 @@ nix eval --raw \
   "$FLAKE#nixosConfigurations.$HOST.config.machine.cpuVendor"
 nix eval --raw \
   "$FLAKE#nixosConfigurations.$HOST.config.machine.gpuVendor"
+```
+
+Для Fish переменные задаются через `set`, а не через `NAME=value`:
+
+```fish
+set FLAKE "path:$PWD"
+set HOST "honor-magicbook-x16-pro"
+
+nix eval "$FLAKE#nixosConfigurations.$HOST.config.networking.hostName"
+nix eval --raw \
+  "$FLAKE#nixosConfigurations.$HOST.config.system.build.toplevel.drvPath"
+nix eval --raw \
+  "$FLAKE#nixosConfigurations.$HOST.config.disko.devices.disk.main.device"
 ```
 
 ## Проверки Репозитория
@@ -164,6 +179,8 @@ nix flake check --show-trace --print-build-logs --keep-going
 
 Требуются `local-device-paths.nix` и `env.hpasswd` в корне репозитория.
 
+Для Bash/Zsh:
+
 ```bash
 FLAKE="path:$PWD"
 HOST="honor-magicbook-x16-pro"
@@ -176,6 +193,23 @@ nix build \
   --show-trace \
   --print-build-logs 2>&1 | tee "$LOG"
 ```
+
+Для Fish:
+
+```fish
+set FLAKE "path:$PWD"
+set HOST "honor-magicbook-x16-pro"
+set LOG "/tmp/nixos-toplevel-"(date +%Y%m%d-%H%M%S)".log"
+
+nix build \
+  "$FLAKE#nixosConfigurations.$HOST.config.system.build.toplevel" \
+  --no-link \
+  --show-trace \
+  --print-build-logs 2>&1 | tee "$LOG"
+```
+
+В Fish нет `set -o pipefail`: статусы всех элементов pipeline находятся в
+`$pipestatus`, а `$status` содержит status последней команды.
 
 Не используй `--rebuild` для первого или невалидного output. Этот флаг повторно
 собирает уже валидный output и сравнивает результаты.
