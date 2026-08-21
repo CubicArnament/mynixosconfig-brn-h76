@@ -49,14 +49,14 @@ export NIX_CONFIG="experimental-features = nix-command flakes"
 
 1. **Определяет диск установки** — генерирует локальный файл устройств:
    ```text
-   hosts/honor-magicbook-x16-pro/local-device-paths.nix
+   local-device-paths.nix
    ```
    Скрипт явно печатает `autoSelected`/`userSelected`, `interactiveTTY` и `selectionSource`,
    чтобы было видно, как именно был выбран диск.
 
 2. **Запрашивает начальный пароль** — интерактивно создаёт хешированный пароль:
    ```text
-   hosts/honor-magicbook-x16-pro/env.hpasswd
+   env.hpasswd
    ```
    Пароль используется **только для первого входа** после установки.
    Его **необходимо немедленно сменить** командой `run0 passwd wkubearnament`.
@@ -74,7 +74,8 @@ export NIX_CONFIG="experimental-features = nix-command flakes"
 Файлы `local-device-paths.nix` и `env.hpasswd` не попадают в Git (`.gitignore`).
 После их генерации installer передаёт Disko ссылку `path:<repo>#<host>`, поэтому
 Nix включает ignored-файлы в source. Обычный `.#...` продолжает использовать
-Git-filtered source и не видит эти файлы.
+Git-filtered source и не видит эти файлы. Host output появляется только когда
+присутствуют оба generated-файла, поэтому неполная конфигурация не собирается.
 
 Самая важная особенность дисков:
 
@@ -104,7 +105,7 @@ nix run .#gen-hpasswd
 ```
 
 Hash записывается с правами `0600` в ignored-файл
-`hosts/honor-magicbook-x16-pro/env.hpasswd`.
+`env.hpasswd` в корне репозитория.
 
 ## Первый вход после установки
 

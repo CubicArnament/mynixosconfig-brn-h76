@@ -23,7 +23,7 @@ else
 fi
 
 HOST_NAME="honor-magicbook-x16-pro"
-LOCAL_DEVICE_PATHS_REL="hosts/${HOST_NAME}/local-device-paths.nix"
+LOCAL_DEVICE_PATHS_REL="local-device-paths.nix"
 
 if [[ ! -f flake.nix || ! -f "hosts/${HOST_NAME}/configuration.nix" ]]; then
   printf "Refusing installation outside the expected NixOS repository: %s\n" "$REPO_ROOT" >&2
@@ -37,7 +37,7 @@ case "$HOST" in
     ;;
 esac
 
-HPASSWD_REL="hosts/${HOST_NAME}/env.hpasswd"
+HPASSWD_REL="env.hpasswd"
 
 case "$HOST" in
   localhost|127.0.0.1|::1)

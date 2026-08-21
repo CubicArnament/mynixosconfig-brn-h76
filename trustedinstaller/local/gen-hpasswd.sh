@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OUT="${1:-hosts/honor-magicbook-x16-pro/env.hpasswd}"
+OUT="${1:-env.hpasswd}"
+umask 077
 
 if [[ ! -c /dev/tty || ! -r /dev/tty || ! -w /dev/tty ]] || ! (: < /dev/tty) 2>/dev/null; then
   printf "ERROR: Interactive TTY required for password generation\n" >&2
@@ -50,10 +51,15 @@ HASH=$(printf "%s\n" "$PASSWORD1" | mkpasswd -m yescrypt -s) || {
   printf "ERROR: Hash generation failed\n" >&2
   exit 1
 }
+unset PASSWORD1 PASSWORD2
 
 mkdir -p "$(dirname "$OUT")"
-printf "%s\n" "$HASH" > "$OUT"
-chmod 600 "$OUT"
+TEMP_OUT=$(mktemp "${OUT}.tmp.XXXXXX")
+trap 'rm -f "$TEMP_OUT"' EXIT
+printf "%s\n" "$HASH" > "$TEMP_OUT"
+chmod 600 "$TEMP_OUT"
+mv -f "$TEMP_OUT" "$OUT"
+trap - EXIT
 
 printf "\nWrote hashed password to: %s\n" "$OUT"
 printf "File permissions: 600 (owner read/write only)\n"

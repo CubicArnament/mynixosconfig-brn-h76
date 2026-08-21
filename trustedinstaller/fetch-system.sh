@@ -2,7 +2,7 @@
 set -euo pipefail
 
 HOST="${1:-}"
-OUT="${2:-hosts/honor-magicbook-x16-pro/local-device-paths.nix}"
+OUT="${2:-local-device-paths.nix}"
 DISK_OVERRIDE="${3:-}"
 CAMERA_OVERRIDE="${4:-}"
 

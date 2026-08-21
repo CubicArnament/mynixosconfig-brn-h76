@@ -2,8 +2,8 @@
 let
   # Import initial hashed password if file exists, otherwise null
   initialHashedPassword = 
-    if builtins.pathExists ./env.hpasswd
-    then pkgs.lib.removeSuffix "\n" (builtins.readFile ./env.hpasswd)
+    if builtins.pathExists ../../env.hpasswd
+    then pkgs.lib.removeSuffix "\n" (builtins.readFile ../../env.hpasswd)
     else null;
 in
 {

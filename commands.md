@@ -43,16 +43,16 @@ run0 passwd wkubearnament
 nix run .#fetch-target-device-paths -- localhost
 
 # Проверь результат
-cat hosts/honor-magicbook-x16-pro/local-device-paths.nix
+cat local-device-paths.nix
 
 # Шаг 2: только генерация хешированного пароля
 nix run .#gen-hpasswd
 
 # Проверь что файл создан (содержимое — yescrypt hash)
-ls -la hosts/honor-magicbook-x16-pro/env.hpasswd
+ls -la env.hpasswd
 
-# Шаг 3: установка с уже готовыми файлами
-# Полный installer повторно выполнит fetch и запрос пароля перед установкой.
+# Шаг 3: запустить полный installer
+# Для безопасности он повторно выполнит fetch и запрос пароля.
 nix run .#install-honor-magicbook -- localhost
 ```
 
@@ -87,7 +87,7 @@ INSTALL_DISK_INDEX=1 nix run .#fetch-target-device-paths -- localhost
 # Или явно указать конкретный диск
 nix run .#fetch-target-device-paths -- \
   localhost \
-  hosts/honor-magicbook-x16-pro/local-device-paths.nix \
+  local-device-paths.nix \
   /dev/disk/by-id/nvme-SAMSUNG_... \
   /dev/v4l/by-id/usb-...-video-index0
 ```

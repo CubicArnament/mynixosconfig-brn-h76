@@ -1,4 +1,4 @@
-{ stdenvNoCC, makeWrapper, mkpasswd }:
+{ coreutils, lib, stdenvNoCC, makeWrapper, mkpasswd }:
 
 stdenvNoCC.mkDerivation {
   pname = "gen-hpasswd";
@@ -15,7 +15,7 @@ stdenvNoCC.mkDerivation {
     install -m 755 local/gen-hpasswd.sh $out/bin/gen-hpasswd
 
     wrapProgram $out/bin/gen-hpasswd \
-      --prefix PATH : ${mkpasswd}/bin
+      --prefix PATH : ${lib.makeBinPath [ coreutils mkpasswd ]}
 
     runHook postInstall
   '';

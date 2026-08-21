@@ -71,11 +71,19 @@
       };
 
     honorHostName = "honor-magicbook-x16-pro";
-    honorLocalDevicePathsFile = ./hosts/${honorHostName}/local-device-paths.nix;
+    honorLocalDevicePathsFile = ./local-device-paths.nix;
     honorLocalDevicePaths =
       if builtins.pathExists honorLocalDevicePathsFile
       then import honorLocalDevicePathsFile
       else null;
+    honorHpasswdFile = ./env.hpasswd;
+    honorHpasswd =
+      if builtins.pathExists honorHpasswdFile
+      then nixpkgs.lib.removeSuffix "\n" (builtins.readFile honorHpasswdFile)
+      else "";
+    honorHpasswdValid = builtins.match "\\$(y|6)\\$.*" honorHpasswd != null;
+    installationReady =
+      honorLocalDevicePaths != null && honorHpasswdValid;
 
     fetchTargetDevicePaths = pkgs.callPackage ./trustedinstaller/remote/drv.nix { };
     installHonorMagicbook  = pkgs.callPackage ./trustedinstaller/orchestrator-drv.nix { };
@@ -126,11 +134,11 @@
       };
     };
 
-    nixosConfigurations = nixpkgs.lib.optionalAttrs (honorLocalDevicePaths != null) {
+    nixosConfigurations = nixpkgs.lib.optionalAttrs installationReady {
       ${honorHostName} = mkHost {
         hostName = honorHostName;
         localDevicePaths = if honorLocalDevicePaths == null then {} else honorLocalDevicePaths;
-        extraModules = nixpkgs.lib.optionals (honorLocalDevicePaths != null) [
+        extraModules = [
           disko.nixosModules.disko
           ./modules/nixos/disko/disko.nix
         ];

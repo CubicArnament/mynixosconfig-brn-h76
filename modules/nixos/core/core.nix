@@ -57,7 +57,7 @@
     shell = user.shellPackage;
     home = user.homeDirectory;
     # Initial hashed password for console/TTY fallback authentication
-    # Defined in hosts/*/user.nix, sourced from hosts/*/env.hpasswd.
+    # Defined in hosts/*/user.nix, sourced from the repository-root env.hpasswd.
     # This is ONLY used on user creation - passwd changes are NOT overridden
     inherit (user) initialHashedPassword;
   };

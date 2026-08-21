@@ -24,10 +24,10 @@ fi
 case "$HPASSWD" in
   "\$y\$"*|"\$6\$"*) ;;
   *)
-  printf "Missing or invalid generated password hash: %s\n" "$HPASSWD_REL" >&2
-  printf "Run the complete installer or gen-hpasswd first.\n" >&2
-  exit 2
-  ;;
+    printf "Missing or invalid generated password hash: %s\n" "$HPASSWD_REL" >&2
+    printf "Run the complete installer or gen-hpasswd first.\n" >&2
+    exit 2
+    ;;
 esac
 
 if VIRTUALIZATION=$(systemd-detect-virt 2>/dev/null); then
@@ -144,8 +144,6 @@ if [[ -c /dev/tty && -r /dev/tty && -w /dev/tty ]] && (: < /dev/tty) 2>/dev/null
   if [[ "$CONFIRM" != "$CONFIRM_TOKEN" ]]; then
     printf "Aborted.\n" >&2; exit 3
   fi
-else
-  printf "Non-interactive installation explicitly approved.\n"
 fi
 
 DISK_REAL_FINAL=$(readlink -f "$DISK_DEVICE" 2>/dev/null || true)

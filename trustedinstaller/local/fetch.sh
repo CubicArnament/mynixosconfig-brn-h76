@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OUT="${1:-hosts/honor-magicbook-x16-pro/local-device-paths.nix}"
+OUT="${1:-local-device-paths.nix}"
 DISK_OVERRIDE="${2:-}"
 CAMERA_OVERRIDE="${3:-}"
 INSTALL_DISK_FILTER="${INSTALL_DISK_FILTER:-}"
