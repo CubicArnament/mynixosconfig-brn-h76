@@ -254,6 +254,9 @@ nixos-helper boot
 nixos-helper test
 nixos-helper build
 
+# Применить только Home Manager без root и без system rebuild
+nixos-helper home
+
 # Управление конфигурацией и поколениями
 nixos-helper update
 nixos-helper status

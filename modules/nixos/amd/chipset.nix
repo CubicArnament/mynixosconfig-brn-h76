@@ -24,6 +24,4 @@
   };
 
   hardware.cpu.amd.updateMicrocode = true;
-
-  zramSwap.enable = true;
 }

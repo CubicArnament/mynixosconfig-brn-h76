@@ -5,6 +5,8 @@ _:
     role = "server";
   };
 
+  virtualisation.docker.enable = true;
+
   networking.firewall = {
     allowedTCPPorts = [ 6443 ];
   };

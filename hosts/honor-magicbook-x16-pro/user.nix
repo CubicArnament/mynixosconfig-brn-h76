@@ -11,7 +11,7 @@ in
   description = "Primary user";
   homeDirectory = "/home/wkubearnament";
   shellPackage = pkgs.fish;
-  extraGroups = [ "wheel" "networkmanager" "libvirtd" ];
+  extraGroups = [ "wheel" "networkmanager" "libvirtd" "docker" ];
   inherit initialHashedPassword;
 
   homeStateVersion = "26.05";

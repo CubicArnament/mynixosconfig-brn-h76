@@ -8,7 +8,8 @@ let
     onlyoffice-desktopeditors
     inputs.flclashx.packages.${pkgs.stdenv.hostPlatform.system}.flclashx
     happ
-
+    peazip
+    obsidian
     nodejs_22
     pnpm
   ]
@@ -17,6 +18,7 @@ let
 
   gamingPackages = with pkgs; [
     prismlauncher
+    mcrcon
   ];
 in
 {

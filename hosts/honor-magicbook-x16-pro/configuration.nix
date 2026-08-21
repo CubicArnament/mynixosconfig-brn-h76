@@ -16,6 +16,15 @@
   networking.hostName = hostName;
   time.timeZone = lib.mkForce "Europe/Moscow";
 
+  # Prefer compressed RAM swap under memory pressure; the 8 GiB disk
+  # swapfile remains a lower-priority fallback and is not used for hibernation.
+  zramSwap = {
+    enable = true;
+    algorithm = "zstd";
+    memoryPercent = 50;
+    priority = 100;
+  };
+
   services.zapret2 = {
     enable = true;
     presets = [ "youtube" "discord" "general" ];

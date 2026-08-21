@@ -1,6 +1,8 @@
 {
   bash,
   coreutils,
+  homeManager,
+  homeProfile,
   jq,
   makeWrapper,
   nix,
@@ -26,8 +28,9 @@ stdenvNoCC.mkDerivation {
     install -m 755 nix-prefetch-maintaining.sh $out/bin/nix-prefetch-maintaining
 
     wrapProgram $out/bin/nixos-helper \
-      --prefix PATH : $out/bin:${bash}/bin:${coreutils}/bin:${nix}/bin:${shadow}/bin:${systemd}/bin \
-      --set NIXOS_HELPER_FLAKE "path:/etc/nixos#${hostName}"
+      --prefix PATH : $out/bin:${bash}/bin:${coreutils}/bin:${homeManager}/bin:${nix}/bin:${shadow}/bin:${systemd}/bin \
+      --set NIXOS_HELPER_FLAKE "path:/etc/nixos#${hostName}" \
+      --set NIXOS_HELPER_HOME_FLAKE "path:/etc/nixos#${homeProfile}"
 
     wrapProgram $out/bin/nix-prefetch-maintaining \
       --prefix PATH : ${bash}/bin:${jq}/bin:${nix}/bin

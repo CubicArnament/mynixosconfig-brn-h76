@@ -29,6 +29,7 @@ Commands:
   boot          Build now, activate on the next boot.
   test          Build and activate until the next boot.
   build         Build without activating.
+  home          Build and activate only the Home Manager configuration.
   update        Update flake.lock in /etc/nixos.
   status        Show current generation and boot entry.
   generations   List recent system generations.
@@ -46,6 +47,10 @@ EOF
   update)
     shift
     elevate nix flake update --flake /etc/nixos "$@"
+    ;;
+  home)
+    shift
+    exec home-manager switch --flake "$NIXOS_HELPER_HOME_FLAKE" "$@"
     ;;
   status)
     printf "Current generation: "

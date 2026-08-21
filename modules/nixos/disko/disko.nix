@@ -1,7 +1,7 @@
 
 { diskDevice, ... }:
 let
-  swapSize = "16G";
+  swapSize = "8G";
   commonMountOptions = [
     "compress=zstd:3"
     "noatime"

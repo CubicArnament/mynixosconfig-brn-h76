@@ -43,6 +43,17 @@
 
     user = import ./hosts/honor-magicbook-x16-pro/user.nix { inherit pkgs; };
     userName = user.name;
+    honorHostName = "honor-magicbook-x16-pro";
+    homeProfile = "${userName}@${honorHostName}";
+    homePkgs = import nixpkgs {
+      inherit system;
+      config.allowUnfree = true;
+    };
+    homeSpecialArgs = {
+      inherit inputs user userName;
+      hostName = honorHostName;
+      cameraDevicePath = "";
+    };
 
     mkHost = { hostName, extraModules ? [], localDevicePaths ? {} }:
       let
@@ -70,7 +81,6 @@
         ] ++ extraModules;
       };
 
-    honorHostName = "honor-magicbook-x16-pro";
     honorLocalDevicePathsFile = ./local-device-paths.nix;
     honorLocalDevicePaths =
       if builtins.pathExists honorLocalDevicePathsFile
@@ -92,7 +102,9 @@
     };
     happ = pkgs.callPackage ./dev/maintaining/happ.nix { };
     nixosHelper = pkgs.callPackage ./trustedinstaller/scripts/nixos-helper.d/drv.nix {
+      homeManager = home-manager.packages.${system}.default;
       hostName = honorHostName;
+      inherit homeProfile;
     };
 
   in {
@@ -106,6 +118,13 @@
 
     checks.${system} = {
       inherit fetchTargetDevicePaths installHonorMagicbook genHpasswd happ nixosHelper;
+      home = self.homeConfigurations.${homeProfile}.activationPackage;
+    };
+
+    homeConfigurations.${homeProfile} = home-manager.lib.homeManagerConfiguration {
+      pkgs = homePkgs;
+      extraSpecialArgs = homeSpecialArgs;
+      modules = [ ./hosts/${honorHostName}/home.nix ];
     };
 
     apps.${system} = {
