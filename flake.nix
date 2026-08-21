@@ -21,6 +21,11 @@
 
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=v0.7.0";
 
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     zen-browser = {
       url = "github:youwen5/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -108,7 +113,17 @@
       inherit homeProfile;
     };
 
+    treefmtEval = inputs.treefmt-nix.lib.evalModule pkgs {
+      projectRootFile = "flake.nix";
+
+      programs.nixfmt.enable = true;
+      programs.shfmt.enable = true;
+      programs.shfmt.arguments = [ "-i" "2" "-ci" "-sr" ];
+    };
+
   in {
+    formatter.${system} = treefmtEval.config.build.wrapper;
+
     packages.${system} = {
       inherit fetchTargetDevicePaths installHonorMagicbook genHpasswd happ nixosHelper;
       fetch-target-device-paths = fetchTargetDevicePaths;
