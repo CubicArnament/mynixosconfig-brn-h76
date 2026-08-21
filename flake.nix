@@ -116,9 +116,13 @@
     treefmtEval = inputs.treefmt-nix.lib.evalModule pkgs {
       projectRootFile = "flake.nix";
 
-      programs.nixfmt.enable = true;
-      programs.shfmt.enable = true;
-      programs.shfmt.arguments = [ "-i" "2" "-ci" "-sr" ];
+      programs = {
+        nixfmt.enable = true;
+        shfmt = {
+          enable = true;
+          arguments = [ "-i" "2" "-ci" "-sr" ];
+        };
+      };
     };
 
   in {

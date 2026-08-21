@@ -6,14 +6,10 @@ _:
 
     run0 = {
       enable = true;
-      enableSudoAlias = true;
+      sudo-shim.enable = true;
       wheelNeedsPassword = true;
     };
 
-    polkit.enable = true;
-
-    pam.services = {
-      systemd-run0 = {};
-    };
+    pam.services.systemd-run0 = { };
   };
 }
