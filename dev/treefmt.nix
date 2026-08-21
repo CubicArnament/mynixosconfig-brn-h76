@@ -5,7 +5,8 @@
     nixfmt.enable = true;
     shfmt = {
       enable = true;
-      arguments = [ "-i" "2" "-ci" "-sr" ];
+      indent_size = 2;
+      simplify = true;
     };
   };
 }
