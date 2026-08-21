@@ -102,6 +102,7 @@
     };
     happ = pkgs.callPackage ./dev/maintaining/happ.nix { };
     nixosHelper = pkgs.callPackage ./trustedinstaller/scripts/nixos-helper.d/drv.nix {
+      commandScripts = ./trustedinstaller/scripts/nixos-helper.d/commands;
       homeManager = home-manager.packages.${system}.default;
       hostName = honorHostName;
       inherit homeProfile;
