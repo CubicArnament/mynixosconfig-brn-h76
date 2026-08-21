@@ -23,15 +23,6 @@
   console.useXkbConfig = true;
 
   services = {
-    openssh = {
-      enable = true;
-      settings = {
-        PasswordAuthentication = false;
-        KbdInteractiveAuthentication = false;
-        AllowUsers = [ user.name ];
-      };
-    };
-
     xserver.xkb = {
       layout = "us,ru";
       options = "grp:alt_shift_toggle";
@@ -65,10 +56,9 @@
     inherit (user) description extraGroups;
     shell = user.shellPackage;
     home = user.homeDirectory;
-    openssh.authorizedKeys.keys = user.sshAuthorizedKeys;
     # Initial hashed password for console/TTY fallback authentication
-    # Defined in hosts/*/user.nix, sourced from hosts/*/env.passwd
+    # Defined in hosts/*/user.nix, sourced from hosts/*/env.hpasswd.
     # This is ONLY used on user creation - passwd changes are NOT overridden
-    initialHashedPassword = user.initialHashedPassword;
+    inherit (user) initialHashedPassword;
   };
 }

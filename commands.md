@@ -50,32 +50,28 @@ nix run .#gen-hpasswd
 
 # Проверь что файл создан (содержимое — yescrypt hash)
 ls -la hosts/honor-magicbook-x16-pro/env.hpasswd
+
 # Шаг 3: установка с уже готовыми файлами
+# Полный installer повторно выполнит fetch и запрос пароля перед установкой.
 nix run .#install-honor-magicbook -- localhost
 ```
 
 ---
 
-# Выбрать второй кандидат
-INSTALL_DISK_INDEX=2 nix run .#fetch-target-device-paths -- nixos@<ip>
-```
-
----
-
-### Сценарий 6 — Фетч с фильтром по классу или модели
+### Фетч с фильтром по классу или модели
 
 ```bash
 # Только NVMe диски
-INSTALL_DISK_FILTER=nvme nix run .#fetch-target-device-paths -- nixos@<ip>
+INSTALL_DISK_FILTER=nvme nix run .#fetch-target-device-paths -- localhost
 
 # По подстроке модели
-INSTALL_DISK_FILTER=Samsung nix run .#fetch-target-device-paths -- nixos@<ip>
+INSTALL_DISK_FILTER=Samsung nix run .#fetch-target-device-paths -- localhost
 
 # Второй NVMe если их несколько
-INSTALL_DISK_FILTER=nvme INSTALL_DISK_INDEX=2 nix run .#fetch-target-device-paths -- nixos@<ip>
+INSTALL_DISK_FILTER=nvme INSTALL_DISK_INDEX=2 nix run .#fetch-target-device-paths -- localhost
 
 # Тот диск, на котором сейчас стоит система (только детект)
-INSTALL_DISK_FILTER=system nix run .#fetch-target-device-paths -- nixos@<ip>
+INSTALL_DISK_FILTER=system nix run .#fetch-target-device-paths -- localhost
 ```
 
 ---
@@ -105,12 +101,6 @@ nix run .#install-honor-magicbook -- localhost 2>&1 | tee install.log
 ```
 
 ---
-nix run .#install-honor-magicbook -- localhost > /dev/null
-```
-
----
-
----
 
 ### Что делает фетч (логика выбора диска)
 
@@ -135,8 +125,7 @@ nix run .#install-honor-magicbook -- localhost > /dev/null
 
 ### Важные ограничения
 
-- `nixos-anywhere` требует SSH доступ — `sshd` должен быть запущен на целевой машине
-- `localhost` режим не использует SSH — запускать прямо на целевом железе с live ISO
+- установка требует локальный интерактивный TTY и запускается на целевом железе с live ISO
 - `disko` и `disko-install` **полностью уничтожают данные** на выбранном диске
 - не используй raw UUID для `diskDevice` — только whole-disk `by-id`
 - ты сам отвечаешь за выбор диска; скрипты снижают риск, но не дают гарантий
@@ -147,46 +136,41 @@ nix run .#install-honor-magicbook -- localhost > /dev/null
 
 После завершения установки и перезагрузки системы:
 
-**SSH вход (основной метод):**
-```bash
-ssh wkubearnament@<ip-адрес>
-```
-
-SSH-ключ уже настроен в `hosts/honor-magicbook-x16-pro/env.ssh` и установлен в систему.
-
-**Console/TTY вход (fallback):**
+**Console/TTY или графический вход:**
 - Логин: `wkubearnament`
-- Пароль: тот, который ты захешировал в `env.passwd`
+- Пароль: тот, который ты ввёл на стадии генерации hash
 
 **После первого входа:**
 ```bash
-# Смени пароль на новый (опционально)
+# Обязательно смени начальный пароль
 passwd
 
 # (Опционально) Настроить Howdy для face auth
 run0 howdy add
 ```
 
-**Важно:** `initialHashedPassword` применяется только при создании пользователя. После того, как ты сменишь пароль через `passwd` или `run0 passwd`, начальный хеш больше не влияет на систему. Ты можешь менять пароль сколько угодно раз, и начальный хеш из `env.passwd` не будет его перезатирать.
+**Важно:** `initialHashedPassword` применяется только при создании пользователя. После того, как ты сменишь пароль через `passwd` или `run0 passwd`, начальный хеш больше не влияет на систему и не перезатирает новый пароль.
 
 ---
 
 ## Сборка и проверка (WSL / другой NixOS)
 
-Все команды запускать из корня репо. Изменения отслеживаемых файлов Git входят в source flake; новые файлы сначала добавь через `git add`.
+Все команды запускать из корня репозитория. Обычный Git-backed `.#...` намеренно
+не видит ignored `local-device-paths.nix` и `env.hpasswd`. Поэтому system
+evaluation/build после их генерации выполняется через `path:$PWD#...`.
 
 ### Полная сборка системы
 
 Собирает всё дерево деривации, создаёт `./result`:
 
 ```bash
-nix build .#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.toplevel
+nix build "path:$PWD#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.toplevel"
 ```
 
 С логами прогресса:
 
 ```bash
-nix build .#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.toplevel \
+nix build "path:$PWD#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.toplevel" \
   --log-format bar-with-logs
 ```
 
@@ -195,7 +179,7 @@ nix build .#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.topl
 Только вычисляет конфиг — в разы быстрее полной сборки, ловит ошибки типов и assertions:
 
 ```bash
-nix eval .#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.toplevel
+nix eval "path:$PWD#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.toplevel"
 ```
 
 ### Проверка flake без сборки
@@ -210,23 +194,23 @@ nix flake check
 
 ```bash
 # Посмотреть какой diskDevice попал в конфиг
-nix eval .#nixosConfigurations.honor-magicbook-x16-pro.config.disko.devices.disk.main.device
+nix eval "path:$PWD#nixosConfigurations.honor-magicbook-x16-pro.config.disko.devices.disk.main.device"
 
 # Посмотреть итоговый список пакетов
-nix eval .#nixosConfigurations.honor-magicbook-x16-pro.config.environment.systemPackages \
+nix eval "path:$PWD#nixosConfigurations.honor-magicbook-x16-pro.config.environment.systemPackages" \
   --apply 'map (p: p.name)' --json | jq .
 
 # Проверить что machine.gpuVendor определился правильно
-nix eval .#nixosConfigurations.honor-magicbook-x16-pro.config.machine.gpuVendor
+nix eval "path:$PWD#nixosConfigurations.honor-magicbook-x16-pro.config.machine.gpuVendor"
 
 # Проверить machine.cpuVendor
-nix eval .#nixosConfigurations.honor-magicbook-x16-pro.config.machine.cpuVendor
+nix eval "path:$PWD#nixosConfigurations.honor-magicbook-x16-pro.config.machine.cpuVendor"
 ```
 
 ### Полная трассировка при ошибке
 
 ```bash
-nix build .#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.toplevel \
+nix build "path:$PWD#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.toplevel" \
   --show-trace
 ```
 
@@ -243,14 +227,13 @@ nix build .#install-honor-magicbook
 nix build .#fetch-target-device-paths .#install-honor-magicbook
 ```
 
-### Если дерево грязное (dirty tree)
+### Generated файлы и source filtering
 
-Git flake учитывает изменения уже отслеживаемых файлов рабочего дерева. Новые
-неотслеживаемые файлы не входят в source flake, пока их не добавить в индекс:
+Не добавляй `local-device-paths.nix` и `env.hpasswd` в Git. Для system build
+используй `path:` reference, который намеренно включает ignored-файлы:
 
 ```bash
-git add path/to/new-file
-nix build .#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.toplevel
+nix build "path:$PWD#nixosConfigurations.honor-magicbook-x16-pro.config.system.build.toplevel"
 ```
 
 ---

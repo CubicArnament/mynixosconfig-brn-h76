@@ -7,8 +7,7 @@ DISK_OVERRIDE="${3:-}"
 CAMERA_OVERRIDE="${4:-}"
 
 if [[ -z "$HOST" ]]; then
-  printf "usage: fetch-target-device-paths <localhost|user@host> [output-file] [disk-by-id] [camera-by-id]\n" >&2
-  printf "env: INSTALL_DISK_FILTER=<filter>  INSTALL_DISK_INDEX=<n>\n" >&2
+  printf "usage: fetch-target-device-paths localhost [output-file] [disk-by-id] [camera-by-id]\n" >&2
   exit 1
 fi
 
@@ -31,8 +30,7 @@ case "$HOST" in
     exec bash "$LIBEXEC_DIR/local/fetch.sh" "$OUT" "$DISK_OVERRIDE" "$CAMERA_OVERRIDE"
     ;;
   *)
-    FETCH_RESULT=$(ssh "$HOST" "sh -s" < "$LIBEXEC_DIR/remote/fetch.sh")
-    export FETCH_RESULT
-    exec bash "$LIBEXEC_DIR/local/fetch.sh" "$OUT" "$DISK_OVERRIDE" "$CAMERA_OVERRIDE"
+    printf "Only localhost detection is supported; run this on the target laptop.\n" >&2
+    exit 2
     ;;
 esac

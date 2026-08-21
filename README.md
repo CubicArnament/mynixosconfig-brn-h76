@@ -71,8 +71,10 @@ export NIX_CONFIG="experimental-features = nix-command flakes"
 Для install-диска используется **`/dev/disk/by-id`**, а не `UUID`, потому что
 `disko` работает с **целым диском до создания файловых систем**.
 
-Файлы `local-device-paths.nix` и `env.hpasswd` не попадают в Git (`.gitignore`),
-но включаются в flake через `builtins.pathExists`.
+Файлы `local-device-paths.nix` и `env.hpasswd` не попадают в Git (`.gitignore`).
+После их генерации installer передаёт Disko ссылку `path:<repo>#<host>`, поэтому
+Nix включает ignored-файлы в source. Обычный `.#...` продолжает использовать
+Git-filtered source и не видит эти файлы.
 
 Самая важная особенность дисков:
 
@@ -94,56 +96,38 @@ export NIX_CONFIG="experimental-features = nix-command flakes"
 
 ## Настройка начального пароля
 
-Перед установкой системы настрой хешированный пароль для первого входа:
+Полный installer сам дважды запрашивает пароль без echo и создаёт yescrypt hash.
+Отдельно эту стадию можно запустить из корня репозитория:
 
-**Генерация хеша пароля:**
 ```bash
-mkpasswd -m yescrypt
+nix run .#gen-hpasswd
 ```
 
-Введи желаемый пароль, получишь хеш вида:
-```
-$y$j9T$vQx7LZJx0hN5tP.5X9yQs.$pNO6CxWn4Bt6pYvLZyqU0k1xK8kVZ3J0c8DPMm2HYe7
-```
-
-**Сохрани хеш в `env.passwd`:**
-```bash
-# В корне репозитория
-echo '$y$j9T$your_hash_here' > hosts/honor-magicbook-x16-pro/env.passwd
-```
-
-Файл `env.passwd` в `.gitignore`, не попадёт в Git.
-
-**Поддерживаемые методы хеширования (по убыванию стойкости):**
-- `yescrypt` — современный, CPU и memory-hard (рекомендуется)
-- `sha512` — традиционный сильный хеш
-- `sha256` — старше, но приемлемый
+Hash записывается с правами `0600` в ignored-файл
+`hosts/honor-magicbook-x16-pro/env.hpasswd`.
 
 ## Первый вход после установки
 
 После завершения установки и перезагрузки:
 
-**SSH вход (основной метод):**
-```bash
-ssh wkubearnament@<ip-адрес>
-```
-
-SSH-ключ уже настроен в конфиге (`hosts/honor-magicbook-x16-pro/env.ssh`).
-
-**Console/TTY вход (fallback):**
+**Console/TTY или графический вход:**
 - Логин: `wkubearnament`
-- Пароль: тот, который ты захешировал в `env.passwd`
+- Пароль: тот, который ты ввёл на стадии генерации hash
 
 **После первого входа:**
 ```bash
-# Смени пароль на новый (опционально)
+# Обязательно смени начальный пароль
 passwd
 
 # (Опционально) Настроить Howdy для face auth
 run0 howdy add
 ```
 
-**Важно:** `initialHashedPassword` применяется только при создании пользователя. После того, как ты сменишь пароль через `passwd` или `run0 passwd`, начальный хеш больше не влияет на систему. Ты можешь менять пароль сколько угодно раз, и начальный хеш из `env.passwd` не будет его перезатирать.
+**Важно:** `initialHashedPassword` применяется только при создании пользователя. После смены через `passwd` или `run0 passwd` generated hash больше не влияет на систему и не перезатирает новый пароль.
+
+Hash не является plaintext, но при `path:` evaluation попадает в Nix store,
+который обычно доступен локальным пользователям на чтение. Поэтому начальный
+пароль должен быть временным и отличаться от постоянных паролей.
 
 ## Команды
 

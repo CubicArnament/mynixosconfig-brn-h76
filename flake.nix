@@ -31,18 +31,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nixos-anywhere = {
-      url = "github:nix-community/nixos-anywhere";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     zapret2-nix = {
       url = "github:ZenonEl/zapret2-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = inputs@{ self, nixpkgs, disko, home-manager, nix-flatpak, nixos-anywhere, zapret2-nix, ... }: let
+  outputs = inputs@{ self, nixpkgs, disko, home-manager, nix-flatpak, zapret2-nix, ... }: let
     system = "x86_64-linux";
     pkgs = import nixpkgs { inherit system; };
 
@@ -51,7 +46,10 @@
 
     mkHost = { hostName, extraModules ? [], localDevicePaths ? {} }:
       let
-        sharedArgs = { inherit inputs hostName user userName; } // localDevicePaths;
+        sharedArgs = {
+          inherit inputs hostName user userName;
+          cameraDevicePath = "";
+        } // localDevicePaths;
       in
       nixpkgs.lib.nixosSystem {
         inherit system;
@@ -77,18 +75,12 @@
     honorLocalDevicePaths =
       if builtins.pathExists honorLocalDevicePathsFile
       then import honorLocalDevicePathsFile
-      else {
-        diskDevice = "/dev/disk/by-id/CONFIGURE-ME-run-fetch-target-device-paths";
-        cameraDevicePath = "";
-      };
-
-    honorHpasswdFile = ./hosts/${honorHostName}/env.hpasswd;
-    honorHpasswdExists = builtins.pathExists honorHpasswdFile;
+      else null;
 
     fetchTargetDevicePaths = pkgs.callPackage ./trustedinstaller/remote/drv.nix { };
     installHonorMagicbook  = pkgs.callPackage ./trustedinstaller/orchestrator-drv.nix { };
     genHpasswd = pkgs.callPackage ./trustedinstaller/gen-hpasswd-drv.nix {
-      mkpasswd = pkgs.mkpasswd;
+      inherit (pkgs) mkpasswd;
     };
     happ = pkgs.callPackage ./dev/maintaining/happ.nix { };
     nixosHelper = pkgs.callPackage ./trustedinstaller/scripts/nixos-helper.d/drv.nix {
@@ -129,21 +121,16 @@
         program = "${disko.packages.${system}.default}/bin/disko-install";
         meta.description = "Install NixOS with the pinned disko input";
       };
-      nixos-anywhere = {
-        type = "app";
-        program = "${nixos-anywhere.packages.${system}.default}/bin/nixos-anywhere";
-        meta.description = "Install NixOS remotely with the pinned nixos-anywhere input";
-      };
       default = self.apps.${system}.install-honor-magicbook // {
         meta.description = "Install NixOS on an Honor MagicBook X16 Pro";
       };
     };
 
-    nixosConfigurations = {
+    nixosConfigurations = nixpkgs.lib.optionalAttrs (honorLocalDevicePaths != null) {
       ${honorHostName} = mkHost {
         hostName = honorHostName;
-        localDevicePaths = honorLocalDevicePaths;
-        extraModules = [
+        localDevicePaths = if honorLocalDevicePaths == null then {} else honorLocalDevicePaths;
+        extraModules = nixpkgs.lib.optionals (honorLocalDevicePaths != null) [
           disko.nixosModules.disko
           ./modules/nixos/disko/disko.nix
         ];

@@ -1,4 +1,4 @@
-{ pkgs, config, ... }:
+{ pkgs, ... }:
 {
   home.sessionVariables = {
     HSA_OVERRIDE_GFX_VERSION = "11.0.0";

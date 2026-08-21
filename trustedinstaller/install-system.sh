@@ -3,11 +3,13 @@ set -euo pipefail
 
 HOST="${1:-}"
 if [[ -z "$HOST" ]]; then
-  printf "usage: install-honor-magicbook <localhost|user@host>\n\n" >&2
-  printf "  localhost   — live ISO, local disko-install\n" >&2
-  printf "  user@host   — remote nixos-anywhere over SSH\n\n" >&2
-  printf "env: INSTALL_DISK_FILTER=<filter>  INSTALL_DISK_INDEX=<n>\n" >&2
+  printf "usage: install-honor-magicbook localhost\n" >&2
   exit 1
+fi
+
+if [[ ! -c /dev/tty || ! -r /dev/tty || ! -w /dev/tty ]] || ! (: < /dev/tty) 2>/dev/null; then
+  printf "Installation requires direct access to an interactive TTY.\n" >&2
+  exit 2
 fi
 
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
@@ -46,11 +48,12 @@ case "$HOST" in
     bash "$LIBEXEC_DIR/local/gen-hpasswd.sh" "$HPASSWD_REL"
 
     printf "\n==> [local] Installing...\n"
-    exec bash "$LIBEXEC_DIR/local/install.sh" "$HOST_NAME" "$LOCAL_DEVICE_PATHS_REL"
+    exec bash "$LIBEXEC_DIR/local/install.sh" \
+      "$HOST_NAME" "$LOCAL_DEVICE_PATHS_REL" "path:$REPO_ROOT"
     ;;
   *)
-    printf "ERROR: Remote SSH installation is no longer supported.\n" >&2
-    printf "This installer requires direct physical access (keyboard and screen).\n" >&2
+    printf "ERROR: Only localhost installation is supported.\n" >&2
+    printf "This installer requires direct physical access to the keyboard and screen.\n" >&2
     printf "Boot the NixOS ISO on the Honor MagicBook and run: nix run .#install-honor-magicbook -- localhost\n" >&2
     exit 2
     ;;

@@ -107,7 +107,7 @@ SELECTION_SOURCE="single-candidate"
 
 if (( DISK_COUNT > 1 )); then
   (( INTERACTIVE_TTY )) \
-    && SELECTION_SOURCE="auto-timeout-or-default" \
+    && SELECTION_SOURCE="interactive-selection-required" \
     || SELECTION_SOURCE="auto-noninteractive"
 fi
 

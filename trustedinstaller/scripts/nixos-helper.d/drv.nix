@@ -27,7 +27,7 @@ stdenvNoCC.mkDerivation {
 
     wrapProgram $out/bin/nixos-helper \
       --prefix PATH : $out/bin:${bash}/bin:${coreutils}/bin:${nix}/bin:${shadow}/bin:${systemd}/bin \
-      --set NIXOS_HELPER_FLAKE "/etc/nixos#${hostName}"
+      --set NIXOS_HELPER_FLAKE "path:/etc/nixos#${hostName}"
 
     wrapProgram $out/bin/nix-prefetch-maintaining \
       --prefix PATH : ${bash}/bin:${jq}/bin:${nix}/bin

@@ -12,15 +12,9 @@ stdenvNoCC.mkDerivation {
     runHook preInstall
 
     mkdir -p $out/bin
-    mkdir -p $out/libexec/local
-
-    install -m 755 local/gen-hpasswd.sh $out/libexec/local/gen-hpasswd.sh
-    install -m 755 gen-hpasswd.sh $out/bin/gen-hpasswd
+    install -m 755 local/gen-hpasswd.sh $out/bin/gen-hpasswd
 
     wrapProgram $out/bin/gen-hpasswd \
-      --prefix PATH : ${mkpasswd}/bin
-
-    wrapProgram $out/libexec/local/gen-hpasswd.sh \
       --prefix PATH : ${mkpasswd}/bin
 
     runHook postInstall

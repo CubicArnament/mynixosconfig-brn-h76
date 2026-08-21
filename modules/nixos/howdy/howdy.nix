@@ -35,7 +35,6 @@ in
       settings = {
         core = {
           abort_if_lid_closed = cfg.isLaptop;
-          abort_if_ssh = true;
           detection_notice = false;
           disabled = false;
           no_confirmation = false;

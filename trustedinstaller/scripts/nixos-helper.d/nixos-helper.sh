@@ -101,8 +101,8 @@ EOF
     fi
     cat <<'EOF'
 This sets the local password for wkubearnament.
-Until a password exists, access is bootstrapped through the SSH key
-configured in /etc/nixos/hosts/honor-magicbook-x16-pro/env.ssh.
+The installer-generated password works for the initial login. Change it
+immediately after installation and whenever account recovery is needed.
 EOF
     exec passwd
     ;;

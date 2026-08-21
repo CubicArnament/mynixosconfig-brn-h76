@@ -1,7 +1,7 @@
 { pkgs }:
 
 pkgs.stdenvNoCC.mkDerivation {
-  name = "honor-magicbook-remote-install";
+  name = "honor-magicbook-device-detection";
   src = ./.;
 
   nativeBuildInputs = [ pkgs.makeWrapper ];
@@ -15,7 +15,7 @@ pkgs.stdenvNoCC.mkDerivation {
 
     wrapProgram $out/bin/fetch-target-device-paths \
       --prefix PATH : ${pkgs.lib.makeBinPath (with pkgs; [
-        bash coreutils findutils gawk gnugrep openssh
+        bash coreutils findutils gawk gnugrep
       ])}
   '';
 }

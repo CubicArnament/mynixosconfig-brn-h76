@@ -3,11 +3,32 @@ set -euo pipefail
 
 HOST_NAME="${1:-}"
 LOCAL_DEVICE_PATHS_REL="${2:-}"
+FLAKE_REF="${3:-path:$PWD}"
 
 if [[ -z "$HOST_NAME" || -z "$LOCAL_DEVICE_PATHS_REL" ]]; then
-  printf "usage: %s <host-name> <local-device-paths-file>\n" "$0" >&2
+  printf "usage: %s <host-name> <local-device-paths-file> [flake-ref]\n" "$0" >&2
   exit 1
 fi
+
+if [[ ! -f "$LOCAL_DEVICE_PATHS_REL" ]]; then
+  printf "Missing generated device file: %s\n" "$LOCAL_DEVICE_PATHS_REL" >&2
+  printf "Run the complete installer or fetch-target-device-paths first.\n" >&2
+  exit 2
+fi
+
+HPASSWD_REL="$(dirname "$LOCAL_DEVICE_PATHS_REL")/env.hpasswd"
+HPASSWD=""
+if [[ -s "$HPASSWD_REL" ]]; then
+  IFS= read -r HPASSWD < "$HPASSWD_REL" || true
+fi
+case "$HPASSWD" in
+  "\$y\$"*|"\$6\$"*) ;;
+  *)
+  printf "Missing or invalid generated password hash: %s\n" "$HPASSWD_REL" >&2
+  printf "Run the complete installer or gen-hpasswd first.\n" >&2
+  exit 2
+  ;;
+esac
 
 if VIRTUALIZATION=$(systemd-detect-virt 2>/dev/null); then
   printf "Refusing installation in virtualized environment: %s\n" "$VIRTUALIZATION" >&2
@@ -25,8 +46,8 @@ if [[ "$(< /sys/class/dmi/id/sys_vendor)" != "HONOR" || "$(< /sys/class/dmi/id/p
   exit 2
 fi
 
-if [[ ! -t 0 && "${INSTALL_NONINTERACTIVE:-}" != "YES" ]]; then
-  printf "Refusing non-interactive installation. Set INSTALL_NONINTERACTIVE=YES to opt in.\n" >&2
+if [[ ! -c /dev/tty || ! -r /dev/tty || ! -w /dev/tty ]] || ! (: < /dev/tty) 2>/dev/null; then
+  printf "Refusing installation without a directly accessible interactive TTY.\n" >&2
   exit 2
 fi
 
@@ -51,10 +72,6 @@ DISK_DEVICE=$(
   exit 2
 }
 
-if [[ "$DISK_DEVICE" == *"CONFIGURE-ME"* ]]; then
-  printf "CRITICAL: Placeholder disk device detected at runtime\n" >&2
-  exit 2
-fi
 if ! LC_ALL=C printf '%s' "${DISK_DEVICE##*/}" | grep -q '^[A-Za-z0-9._+:-]*$'; then
   printf "Refusing disk path with non-ASCII characters: %s\n" "$DISK_DEVICE" >&2
   exit 2
@@ -154,7 +171,7 @@ printf "Running disko-install...\n"
 
 if ! nix --extra-experimental-features "nix-command flakes" \
   run .#disko-install -- \
-  --flake ".#${HOST_NAME}" \
+  --flake "${FLAKE_REF}#${HOST_NAME}" \
   --disk main "$DISK_DEVICE"; then
   printf "Installation failed; the selected disk may be partially modified. Do not reboot until the failure is resolved.\n" >&2
   exit 1
