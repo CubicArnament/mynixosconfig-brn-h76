@@ -180,20 +180,21 @@ nix flake check --show-trace --print-build-logs --keep-going
 ## System Build
 
 Требуются `local-device-paths.nix` и `env.hpasswd` в корне репозитория.
+Команда ниже выполняет тестовую полную сборку system toplevel и печатает
+подробные логи только в терминал. Файл лога и symlink `result` не создаются.
 
 Для Bash/Zsh:
 
 ```bash
 FLAKE="path:$PWD"
 HOST="honor-magicbook-x16-pro"
-LOG="/tmp/nixos-toplevel-$(date +%Y%m%d-%H%M%S).log"
 
-set -o pipefail
 nix build \
   "$FLAKE#nixosConfigurations.$HOST.config.system.build.toplevel" \
   --no-link \
   --show-trace \
-  --print-build-logs 2>&1 | tee "$LOG"
+  --print-build-logs \
+  --log-format bar-with-logs
 ```
 
 Для Fish:
@@ -201,17 +202,14 @@ nix build \
 ```fish
 set FLAKE "path:$PWD"
 set HOST "honor-magicbook-x16-pro"
-set LOG "/tmp/nixos-toplevel-"(date +%Y%m%d-%H%M%S)".log"
 
 nix build \
   "$FLAKE#nixosConfigurations.$HOST.config.system.build.toplevel" \
   --no-link \
   --show-trace \
-  --print-build-logs 2>&1 | tee "$LOG"
+  --print-build-logs \
+  --log-format bar-with-logs
 ```
-
-В Fish нет `set -o pipefail`: статусы всех элементов pipeline находятся в
-`$pipestatus`, а `$status` содержит status последней команды.
 
 Не используй `--rebuild` для первого или невалидного output. Этот флаг повторно
 собирает уже валидный output и сравнивает результаты.
