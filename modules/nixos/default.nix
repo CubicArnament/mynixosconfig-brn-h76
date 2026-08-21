@@ -11,7 +11,7 @@ _:
     ./btrfs/btrfs.nix
     ./bootloader/bootloader.nix
     ./kernel/kernel.nix
-    ./nixos-helper.nix
+    ./nix-hlp.nix
 
     ./network/network.nix
 

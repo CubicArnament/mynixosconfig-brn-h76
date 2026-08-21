@@ -166,7 +166,9 @@ nix run nixpkgs#shellcheck -- \
   trustedinstaller/*.sh \
   trustedinstaller/local/*.sh \
   trustedinstaller/remote/fetch.sh \
-  trustedinstaller/scripts/nixos-helper.d/*.sh
+  trustedinstaller/scripts/nixos-helper.d/*.sh \
+  trustedinstaller/scripts/nixos-helper.d/commands/*.sh \
+  trustedinstaller/scripts/nixos-helper.d/templates/*.sh
 ```
 
 Собрать flake checks:
@@ -235,13 +237,16 @@ passwd
 Hash не является plaintext, но при `path:` evaluation попадает в Nix store.
 Поэтому начальный пароль должен быть временным и не использоваться где-либо ещё.
 
-## Nixos Helper
+## Nix Hlp
+
+Имя `nh` занято upstream-проектом `nix-community/nh`, поэтому локальный helper
+устанавливается как `nix-hlp`.
 
 Привязать userspace-репозиторий к `/etc/nixos`:
 
 ```bash
 cd ~/mynixosconfig-brn-h76
-nixos-helper config-setup
+nix-hlp config-setup
 ```
 
 Helper использует `path:/etc/nixos#honor-magicbook-x16-pro`, поэтому видит
@@ -249,29 +254,88 @@ ignored runtime-файлы.
 
 ```bash
 # Build/apply
-nixos-helper switch
-nixos-helper boot
-nixos-helper test
-nixos-helper build
+nix-hlp switch
+nix-hlp boot
+nix-hlp test
+nix-hlp build
 
 # Применить только Home Manager без root и без system rebuild
-nixos-helper home
+nix-hlp home
 
 # Управление конфигурацией и поколениями
-nixos-helper update
-nixos-helper status
-nixos-helper generations
-nixos-helper rollback
-nixos-helper diff
-nixos-helper clean
-nixos-helper clean 14
+nix-hlp update
+nix-hlp status
+nix-hlp generations
+nix-hlp rollback
+nix-hlp diff
+nix-hlp clean
+nix-hlp clean 14
 
 # Пароль и package maintenance
-nixos-helper set-password
-nixos-helper prefetch https://example.com/source.tar.gz
+nix-hlp set-password
+nix-hlp prefetch https://example.com/source.tar.gz
 ```
 
 Root-команды автоматически используют доступный `run0`, `sudo` или `doas`.
+
+### Форматирование
+
+`nix fmt` форматирует текущую NixOS-конфигурацию formatter-ом из её `flake.nix`.
+Согласно CLI Nix, обычные аргументы передаются formatter-у, поэтому точка
+форматирует текущую директорию. `--` нужен для formatter flags:
+
+```bash
+# Всё дерево текущей конфигурации
+nix fmt
+
+# Текущая или конкретная директория
+nix fmt .
+nix fmt ./modules
+
+# Formatter flag
+nix fmt -- --fail-on-change
+```
+
+Для любого другого проекта используй formatter, установленный вместе с helper:
+
+```bash
+# Текущий проект
+nix-hlp fmt
+
+# Произвольный проект или поддиректория
+nix-hlp fmt ~/projects/example
+nix-hlp fmt ~/projects/example --fail-on-change
+```
+
+### Config Setup
+
+`nix-hlp config-setup [directory]` принимает:
+
+- flake-конфигурацию с `nixosConfigurations`/`nixosSystem` и `configuration.nix`;
+- legacy-конфигурацию с корневым `configuration.nix` и узнаваемыми NixOS options.
+
+Обычный project flake с Nix-файлами отклоняется и не может стать `/etc/nixos`.
+
+### Project Templates
+
+```bash
+nix-hlp create project_flake [directory]
+nix-hlp create nix_shell [directory]
+nix-hlp create app_run [directory]
+nix-hlp create app_build [directory]
+nix-hlp create btp [directory]
+```
+
+`project_flake` и `nix_shell` определяют язык по `Cargo.toml`, `pyproject.toml`,
+`requirements.txt`, `package.json`, `go.mod`, `pom.xml` или Gradle-файлам и
+добавляют подходящий базовый toolchain. `app_run` и `app_build` создают flake app
+для запуска или сборки проекта и являются взаимоисключающими стартовыми
+templates, потому что оба создают `flake.nix`. `btp` создаёт модульную структуру
+`flake.nix`, `nix/default.nix`, `nix/modules/project.nix` сразу с apps `run` и
+`build`.
+
+Templates никогда не перезаписывают существующий `flake.nix`, `shell.nix` или
+каталог `nix/`.
 
 ## Zapret2
 

@@ -106,38 +106,31 @@
       inherit (pkgs) mkpasswd;
     };
     happ = pkgs.callPackage ./dev/maintaining/happ.nix { };
-    nixosHelper = pkgs.callPackage ./trustedinstaller/scripts/nixos-helper.d/drv.nix {
+    nixHlp = pkgs.callPackage ./trustedinstaller/scripts/nixos-helper.d/drv.nix {
       commandScripts = ./trustedinstaller/scripts/nixos-helper.d/commands;
+      formatter = treefmtEval.config.build.wrapper;
       homeManager = home-manager.packages.${system}.default;
       hostName = honorHostName;
       inherit homeProfile;
+      templateScripts = ./trustedinstaller/scripts/nixos-helper.d/templates;
     };
 
-    treefmtEval = inputs.treefmt-nix.lib.evalModule pkgs {
-      projectRootFile = "flake.nix";
-
-      programs = {
-        nixfmt.enable = true;
-        shfmt = {
-          enable = true;
-          arguments = [ "-i" "2" "-ci" "-sr" ];
-        };
-      };
-    };
+    treefmtEval = inputs.treefmt-nix.lib.evalModule pkgs ./dev/treefmt.nix;
 
   in {
     formatter.${system} = treefmtEval.config.build.wrapper;
 
     packages.${system} = {
-      inherit fetchTargetDevicePaths installHonorMagicbook genHpasswd happ nixosHelper;
+      inherit fetchTargetDevicePaths installHonorMagicbook genHpasswd happ nixHlp;
       fetch-target-device-paths = fetchTargetDevicePaths;
       install-honor-magicbook = installHonorMagicbook;
       gen-hpasswd = genHpasswd;
+      nix-hlp = nixHlp;
       default = installHonorMagicbook;
     };
 
     checks.${system} = {
-      inherit fetchTargetDevicePaths installHonorMagicbook genHpasswd happ nixosHelper;
+      inherit fetchTargetDevicePaths installHonorMagicbook genHpasswd happ nixHlp;
       home = self.homeConfigurations.${homeProfile}.activationPackage;
     };
 

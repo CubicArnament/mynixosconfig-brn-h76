@@ -25,6 +25,7 @@
 - `modules/home/` — Home Manager модули
 - `dev/development.nix` — общие system/home dev-настройки (`nix develop`, `direnv`, `nix-direnv`)
 - `dev/maintaining/` — шаблоны для пакетов, которым нужна отдельная деривация
+- `nix-hlp` — локальный helper для rebuild, Home Manager, форматирования и project templates
 - `commands.md` — готовые команды для установки, обновления и пост-настройки
 
 ## Установка

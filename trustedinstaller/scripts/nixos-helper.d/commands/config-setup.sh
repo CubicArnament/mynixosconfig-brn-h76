@@ -3,13 +3,18 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
 TARGET_DIR="${1:-$PWD}"
-if [[ ! -f "$TARGET_DIR/flake.nix" ]]; then
-  printf "No flake.nix found in %s\n" "$TARGET_DIR" >&2
+if [[ ! -d "$TARGET_DIR" ]]; then
+  printf "Configuration directory does not exist: %s\n" "$TARGET_DIR" >&2
   exit 2
 fi
 
 TARGET_DIR=$(cd "$TARGET_DIR" && pwd)
-OWNER=$(id -un)
+if ! validate_nixos_config "$TARGET_DIR"; then
+  printf "Refusing to link a generic Nix project as /etc/nixos.\n" >&2
+  exit 2
+fi
+
+OWNER="${SUDO_USER:-$(id -un)}"
 printf "Setting up userspace NixOS config development:\n"
 printf "  Source: %s\n" "$TARGET_DIR"
 printf "  Target: /etc/nixos (symlink)\n"
@@ -22,4 +27,4 @@ fi
 elevate rm -f /etc/nixos
 elevate ln -s "$TARGET_DIR" /etc/nixos
 elevate chown -h "$OWNER:users" /etc/nixos 2>/dev/null || true
-printf "Done. Run: nixos-helper switch\n"
+printf "Done. Run: nix-hlp switch\n"
