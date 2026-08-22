@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export LANG=C.UTF-8
+export LC_ALL=C.UTF-8
+
 HOST_NAME="${1:-}"
 LOCAL_DEVICE_PATHS_REL="${2:-}"
 FLAKE_REF="${3:-path:$PWD}"
@@ -196,6 +199,13 @@ if [[ "$DISK_REAL_FINAL" != "$DISK_REAL" ]]; then
   exit 2
 fi
 
+# Probe for exclusive access without holding the lock: disko needs to reread the
+# partition table, and a retained exclusive open would make that fail with EBUSY.
+if ! flock --exclusive --nonblock "$DISK_REAL" true; then
+  printf "CRITICAL: Disk %s is in exclusive use by another process. Aborting.\n" "$DISK_REAL" >&2
+  exit 2
+fi
+
 if lsblk -nrpo MOUNTPOINT "$DISK_REAL" 2>/dev/null | awk 'NF { found=1 } END { exit !found }'; then
   printf "CRITICAL: Disk became mounted during confirmation. Aborting.\n" >&2
   exit 2
@@ -211,14 +221,20 @@ done < <(lsblk -nrpo PATH "$DISK_REAL" 2>/dev/null)
 
 printf "Running disko-install...\n"
 
-if ! nix --extra-experimental-features "nix-command flakes" \
+set +e
+nix --extra-experimental-features "nix-command flakes" \
   run .#disko-install -- \
   --flake "${FLAKE_REF}#${HOST_NAME}" \
-  --disk main "$DISK_DEVICE"; then
+  --disk main "$DISK_DEVICE"
+INSTALL_STATUS=$?
+set -e
+
+if [[ "$INSTALL_STATUS" -ne 0 ]]; then
   printf "Installation failed; the selected disk may be partially modified. Do not reboot until the failure is resolved.\n" >&2
   exit 1
 fi
 
+unset HPASSWD
 printf "\nDone. You can reboot now.\n"
 printf "\n"
 printf "==============================================\n"

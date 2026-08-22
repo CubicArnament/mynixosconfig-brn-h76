@@ -5,7 +5,8 @@ in
 {
 
   boot.kernelParams = [
-    "8250.nr_uarts=0"
+    "8250.nr_uarts=4"
+    "8250_core.nr_uarts=4"
 
   ] ++ lib.optionals (!cfg.isVm) [
     "mem_sleep_default=s2idle"
