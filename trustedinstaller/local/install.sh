@@ -167,10 +167,16 @@ if [[ -n "$ROOT_SOURCE" ]] && lsblk -snpo PATH,TYPE "$ROOT_SOURCE" 2>/dev/null \
   | awk -v disk="$DISK_REAL" '$2 == "disk" && $1 == disk { found=1 } END { exit !found }'; then
   OCCUPANCY_REASONS+=(current-root)
 fi
-if (( ${#OCCUPANCY_REASONS[@]} > 0 )) && [[ "${INSTALL_ALLOW_OCCUPIED_DISK:-}" != "YES" ]]; then
-  printf "Refusing occupied install disk (%s): %s\n" "$(IFS=,; printf '%s' "${OCCUPANCY_REASONS[*]}")" "$DISK_DEVICE" >&2
-  printf "For an intentional reinstall, re-run with INSTALL_ALLOW_OCCUPIED_DISK=YES.\n" >&2
-  exit 2
+if (( ${#OCCUPANCY_REASONS[@]} > 0 )); then
+  printf "\nWARNING: selected disk is occupied (%s): %s\n" \
+    "$(IFS=,; printf '%s' "${OCCUPANCY_REASONS[*]}")" "$DISK_DEVICE" > /dev/tty
+  printf "Type YES to allow installation on this occupied disk: " > /dev/tty
+  OCCUPIED_CONFIRM=""
+  IFS= read -r OCCUPIED_CONFIRM < /dev/tty || true
+  if [[ "$OCCUPIED_CONFIRM" != "YES" ]]; then
+    printf "Aborted: occupied disk was not approved.\n" >&2
+    exit 2
+  fi
 fi
 
 printf "\n"

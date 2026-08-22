@@ -108,11 +108,11 @@ nix run .#fetch-target-device-paths -- \
   /dev/v4l/by-id/usb-...-video-index0
 ```
 
-Для намеренного стирания занятого/root диска полный installer требует:
+Для намеренного стирания занятого/root диска выбери его фильтром. Installer
+покажет причины занятости и отдельно потребует ввести `YES`:
 
 ```bash
-INSTALL_DISK_FILTER=system INSTALL_ALLOW_OCCUPIED_DISK=YES \
-  nix run .#install-honor-magicbook -- localhost
+INSTALL_DISK_FILTER=system nix run .#install-honor-magicbook -- localhost
 ```
 
 ## Evaluation
