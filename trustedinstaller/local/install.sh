@@ -97,6 +97,15 @@ if (( KNOWN_VENDOR == 0 || KNOWN_MODEL == 0 )); then
   fi
 fi
 
+printf "Validating the complete path-based NixOS flake before any destructive action...\n"
+if ! nix --extra-experimental-features "nix-command flakes" \
+  eval --raw "${FLAKE_REF}#nixosConfigurations.${HOST_NAME}.config.system.build.toplevel.drvPath" \
+  --no-write-lock-file > /dev/null; then
+  printf "NixOS flake evaluation failed before disk partitioning; the target disk was not modified by disko.\n" >&2
+  printf "Check free space with: df -h /nix/store /tmp .\n" >&2
+  exit 2
+fi
+
 DISK_DEVICE=$(
   LC_ALL=C awk '
     /^[[:space:]]*diskDevice[[:space:]]*=/ {
@@ -234,7 +243,9 @@ INSTALL_STATUS=$?
 set -e
 
 if [[ "$INSTALL_STATUS" -ne 0 ]]; then
-  printf "Installation failed; the selected disk may be partially modified. Do not reboot until the failure is resolved.\n" >&2
+  printf "disko-install failed.\n" >&2
+  printf "If its output showed partitioning, mkfs, or mounting, the disk may be partially modified; do not reboot until resolved.\n" >&2
+  printf "If it failed only while evaluating/fetching Nix paths, disk layout was not started.\n" >&2
   exit 1
 fi
 

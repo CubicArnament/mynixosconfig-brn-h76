@@ -17,7 +17,8 @@ MagicBook. Нужен прямой доступ к экрану и клавиа�
 git clone https://github.com/CubicArnament/mynixosconfig-brn-h76.git
 cd mynixosconfig-brn-h76
 export NIX_CONFIG="experimental-features = nix-command flakes"
-nix run .#install-honor-magicbook -- localhost
+sudo nix --extra-experimental-features "nix-command flakes" \
+  run .#install-honor-magicbook -- localhost
 ```
 
 Installer последовательно:
@@ -34,6 +35,19 @@ Installer также показывает `sys_vendor`, `product_name`, `product
 
 `disko-install` полностью уничтожает данные выбранного диска. Таймаутов у
 выбора диска, ввода пароля и destructive confirmation нет.
+
+Если появляется `No space left on device`, заполнен writable store live ISO, а
+не целевой SSD. Форматирование SSD это место не освобождает:
+
+```bash
+df -h /nix/store /tmp .
+nix store gc
+```
+
+После очистки повтори installer. Не запускай полный system build в том же live
+сеансе перед установкой: он может заполнить RAM/overlay ISO.
+Сам installer проверяет store заранее и предлагает выполнить GC после ввода
+`YES`, если места недостаточно.
 
 ## Runtime-Файлы
 
@@ -112,7 +126,9 @@ nix run .#fetch-target-device-paths -- \
 покажет причины занятости и отдельно потребует ввести `YES`:
 
 ```bash
-INSTALL_DISK_FILTER=system nix run .#install-honor-magicbook -- localhost
+INSTALL_DISK_FILTER=system sudo --preserve-env=INSTALL_DISK_FILTER \
+  nix --extra-experimental-features "nix-command flakes" \
+  run .#install-honor-magicbook -- localhost
 ```
 
 ## Evaluation

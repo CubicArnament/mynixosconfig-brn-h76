@@ -36,8 +36,11 @@
 Установка выполняется через flake app:
 
 ```bash
-nix --extra-experimental-features "nix-command flakes" run .#install-honor-magicbook -- localhost
+sudo nix --extra-experimental-features "nix-command flakes" run .#install-honor-magicbook -- localhost
 ```
+
+Если live ISO уже открыл root shell, убери `sudo`. Installer проверяет root-права
+до детекта дисков и запроса пароля.
 
 В live/minimal среде `nix-command` и `flakes` нередко выключены по умолчанию,
 поэтому либо используй эту полную форму, либо заранее выстави:
@@ -74,6 +77,12 @@ export NIX_CONFIG="experimental-features = nix-command flakes"
 через `disko`, а существующие данные на нём будут уничтожены. Логика выбора диска
 в этом репозитории снижает риск ошибки, но не снимает с тебя ответственность за
 проверку целевого диска перед запуском установки.
+
+Свободное место целевого SSD и writable `/nix/store` live ISO — разные вещи.
+Форматирование SSD не освобождает RAM/overlay ISO. Если предыдущие сборки
+заполнили live store, installer предложит удалить неиспользуемые store paths
+после подтверждения `YES`. Вручную можно проверить `df -h /nix/store /tmp .`
+и выполнить `nix store gc`.
 
 Для install-диска используется **`/dev/disk/by-id`**, а не `UUID`, потому что
 `disko` работает с **целым диском до создания файловых систем**.
