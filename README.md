@@ -67,7 +67,7 @@ export NIX_CONFIG="experimental-features = nix-command flakes"
 Перед разметкой installer выводит доступные DMI-поля из `/sys/class/dmi/id`.
 Автоматически принимаются варианты HONOR/HUAWEI с `BRN-H76` или
 `MagicBook X16 Pro` в product/board metadata. Если BIOS использует другие
-значения, установка требует вручную ввести `ALLOW-UNRECOGNIZED-HOST`; случайно
+значения, установка требует вручную ввести `YES`; случайно
 продолжить установку на неподтверждённом компьютере нельзя.
 
 Важно: эта установка **разрушительная**. Выбранный install-диск будет размечен

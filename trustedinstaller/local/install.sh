@@ -86,13 +86,12 @@ printf "  board_vendor    = %s\n" "$DMI_BOARD_VENDOR"
 printf "  board_name      = %s\n" "$DMI_BOARD_NAME"
 
 if (( KNOWN_VENDOR == 0 || KNOWN_MODEL == 0 )); then
-  DMI_CONFIRM_TOKEN="ALLOW-UNRECOGNIZED-HOST"
   printf "\nWARNING: DMI does not match a known Honor MagicBook X16 Pro variant.\n" > /dev/tty
   printf "The configuration may still work, but hardware-specific settings can be incompatible.\n" > /dev/tty
-  printf "Type %s to continue: " "$DMI_CONFIRM_TOKEN" > /dev/tty
+  printf "Type YES to continue: " > /dev/tty
   DMI_CONFIRM=""
   IFS= read -r DMI_CONFIRM < /dev/tty || true
-  if [[ "$DMI_CONFIRM" != "$DMI_CONFIRM_TOKEN" ]]; then
+  if [[ "$DMI_CONFIRM" != "YES" ]]; then
     printf "Aborted due to unrecognized target hardware.\n" >&2
     exit 2
   fi
@@ -184,11 +183,10 @@ printf "  host       = %s\n" "$HOST_NAME"
 printf "  mode       = local (disko-install)\n"
 printf "\n"
 
-CONFIRM_TOKEN=${DISK_DEVICE##*/}
 if [[ -c /dev/tty && -r /dev/tty && -w /dev/tty ]] && (: < /dev/tty) 2>/dev/null; then
-  printf "Type %s to confirm: " "$CONFIRM_TOKEN" > /dev/tty
+  printf "Type YES to permanently destroy all data on this disk: " > /dev/tty
   CONFIRM=""; IFS= read -r CONFIRM < /dev/tty || true
-  if [[ "$CONFIRM" != "$CONFIRM_TOKEN" ]]; then
+  if [[ "$CONFIRM" != "YES" ]]; then
     printf "Aborted.\n" >&2; exit 3
   fi
 fi
