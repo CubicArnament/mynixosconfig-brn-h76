@@ -50,7 +50,7 @@ if [[ ! -c /dev/tty || ! -r /dev/tty || ! -w /dev/tty ]] || ! (: < /dev/tty) 2>/
 fi
 
 read_dmi() {
-  local field="$1" path="/sys/class/dmi/id/$1"
+  local path="/sys/class/dmi/id/$1"
   if [[ -r "$path" ]]; then
     tr -d '\000\r\n' < "$path" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
   else
