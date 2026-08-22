@@ -27,6 +27,11 @@ Installer последовательно:
 3. Показывает целевой диск и требует ввести его полный `by-id` basename.
 4. Запускает `disko-install` через `path:<repo>#honor-magicbook-x16-pro`.
 
+Installer также показывает `sys_vendor`, `product_name`, `product_version`,
+`product_family`, `board_vendor` и `board_name`. Варианты HONOR/HUAWEI с
+`BRN-H76` или `MagicBook X16 Pro` принимаются автоматически. Для другого DMI
+нужно вручную ввести `ALLOW-UNRECOGNIZED-HOST`.
+
 `disko-install` полностью уничтожает данные выбранного диска. Таймаутов у
 выбора диска, ввода пароля и destructive confirmation нет.
 

@@ -342,11 +342,11 @@ build_command() {
 
 shell_hook() {
   case "$PROJECT_LANGUAGE:$PROJECT_MANAGER" in
-    python:*) printf 'export PYTHONPATH="$PWD/src''${PYTHONPATH:+:$PYTHONPATH}"' ;;
+    python:*) printf '%s' "export PYTHONPATH=\"\$PWD/src\${PYTHONPATH:+:\$PYTHONPATH}\"" ;;
     rust:*) printf 'export RUST_BACKTRACE=1' ;;
-    go:*) printf 'export GOPATH="$PWD/.cache/go"' ;;
+    go:*) printf '%s' "export GOPATH=\"\$PWD/.cache/go\"" ;;
     node:*) printf 'export NODE_ENV=development' ;;
-    java:*) printf 'export JAVA_HOME="${pkgs.jdk21}"' ;;
+    java:*) printf '%s' "export JAVA_HOME=\"\${pkgs.jdk21}\"" ;;
     generic:*) printf ':' ;;
   esac
 }

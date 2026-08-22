@@ -41,14 +41,58 @@ if [[ ! -d /sys/firmware/efi ]]; then
   exit 2
 fi
 
-if [[ "$(< /sys/class/dmi/id/sys_vendor)" != "HONOR" || "$(< /sys/class/dmi/id/product_name)" != "BRN-H76" ]]; then
-  printf "Refusing installation: this installer is restricted to HONOR BRN-H76.\n" >&2
-  exit 2
-fi
-
 if [[ ! -c /dev/tty || ! -r /dev/tty || ! -w /dev/tty ]] || ! (: < /dev/tty) 2>/dev/null; then
   printf "Refusing installation without a directly accessible interactive TTY.\n" >&2
   exit 2
+fi
+
+read_dmi() {
+  local field="$1" path="/sys/class/dmi/id/$1"
+  if [[ -r "$path" ]]; then
+    tr -d '\000\r\n' < "$path" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
+  else
+    printf '<unavailable>'
+  fi
+}
+
+normalize_dmi() {
+  printf '%s' "$1" | tr '[:lower:]' '[:upper:]' | sed 's/[[:space:]][[:space:]]*/ /g'
+}
+
+DMI_SYS_VENDOR=$(read_dmi sys_vendor)
+DMI_PRODUCT_NAME=$(read_dmi product_name)
+DMI_PRODUCT_VERSION=$(read_dmi product_version)
+DMI_PRODUCT_FAMILY=$(read_dmi product_family)
+DMI_BOARD_VENDOR=$(read_dmi board_vendor)
+DMI_BOARD_NAME=$(read_dmi board_name)
+
+DMI_VENDOR_TEXT=$(normalize_dmi "$DMI_SYS_VENDOR $DMI_BOARD_VENDOR")
+DMI_MODEL_TEXT=$(normalize_dmi "$DMI_PRODUCT_NAME $DMI_PRODUCT_VERSION $DMI_PRODUCT_FAMILY $DMI_BOARD_NAME")
+
+KNOWN_VENDOR=0
+KNOWN_MODEL=0
+[[ "$DMI_VENDOR_TEXT" == *HONOR* || "$DMI_VENDOR_TEXT" == *HUAWEI* ]] && KNOWN_VENDOR=1
+[[ "$DMI_MODEL_TEXT" == *BRN-H76* || "$DMI_MODEL_TEXT" == *"MAGICBOOK X16 PRO"* ]] && KNOWN_MODEL=1
+
+printf "Detected target hardware:\n"
+printf "  sys_vendor      = %s\n" "$DMI_SYS_VENDOR"
+printf "  product_name    = %s\n" "$DMI_PRODUCT_NAME"
+printf "  product_version = %s\n" "$DMI_PRODUCT_VERSION"
+printf "  product_family  = %s\n" "$DMI_PRODUCT_FAMILY"
+printf "  board_vendor    = %s\n" "$DMI_BOARD_VENDOR"
+printf "  board_name      = %s\n" "$DMI_BOARD_NAME"
+
+if (( KNOWN_VENDOR == 0 || KNOWN_MODEL == 0 )); then
+  DMI_CONFIRM_TOKEN="ALLOW-UNRECOGNIZED-HOST"
+  printf "\nWARNING: DMI does not match a known Honor MagicBook X16 Pro variant.\n" > /dev/tty
+  printf "The configuration may still work, but hardware-specific settings can be incompatible.\n" > /dev/tty
+  printf "Type %s to continue: " "$DMI_CONFIRM_TOKEN" > /dev/tty
+  DMI_CONFIRM=""
+  IFS= read -r DMI_CONFIRM < /dev/tty || true
+  if [[ "$DMI_CONFIRM" != "$DMI_CONFIRM_TOKEN" ]]; then
+    printf "Aborted due to unrecognized target hardware.\n" >&2
+    exit 2
+  fi
 fi
 
 DISK_DEVICE=$(
