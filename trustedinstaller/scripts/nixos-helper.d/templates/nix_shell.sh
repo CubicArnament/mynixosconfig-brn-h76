@@ -4,8 +4,10 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
 TARGET="$1"
-LANGUAGE=$(detect_language "$TARGET")
-PACKAGES=$(language_packages "$LANGUAGE")
+detect_project "$TARGET"
+scaffold_project
+PACKAGES=$(language_packages)
+SHELL_HOOK=$(shell_hook)
 refuse_existing "$TARGET/shell.nix"
 
 cat > "$TARGET/shell.nix" <<EOF
@@ -13,7 +15,11 @@ cat > "$TARGET/shell.nix" <<EOF
 
 pkgs.mkShell {
   packages = [ ${PACKAGES} ];
+  shellHook = ''
+    ${SHELL_HOOK}
+  '';
 }
 EOF
 
-printf "Created %s for detected language: %s\n" "$TARGET/shell.nix" "$LANGUAGE"
+print_project_summary
+printf "Created %s\n" "$TARGET/shell.nix"

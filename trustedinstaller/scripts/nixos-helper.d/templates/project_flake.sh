@@ -4,13 +4,15 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
 TARGET="$1"
-LANGUAGE=$(detect_language "$TARGET")
-PACKAGES=$(language_packages "$LANGUAGE")
+detect_project "$TARGET"
+scaffold_project
+PACKAGES=$(language_packages)
+SHELL_HOOK=$(shell_hook)
 refuse_existing "$TARGET/flake.nix"
 
 cat > "$TARGET/flake.nix" <<EOF
 {
-  description = "Development flake for a ${LANGUAGE} project";
+  description = "Development flake for ${PROJECT_NAME} (${PROJECT_LANGUAGE}/${PROJECT_FRAMEWORK})";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -22,9 +24,13 @@ cat > "$TARGET/flake.nix" <<EOF
     {
       devShells.\${system}.default = pkgs.mkShell {
         packages = [ ${PACKAGES} ];
+        shellHook = ''
+          ${SHELL_HOOK}
+        '';
       };
     };
 }
 EOF
 
-printf "Created %s for detected language: %s\n" "$TARGET/flake.nix" "$LANGUAGE"
+print_project_summary
+printf "Created %s\n" "$TARGET/flake.nix"

@@ -22,8 +22,8 @@ Commands:
   config-setup [directory]
                 Link /etc/nixos to a userspace flake directory.
   fmt [path]    Format a project using the configured Nix formatter.
-  create <template> [directory]
-                Create project_flake, nix_shell, app_run, app_build, or btp.
+  gen <template> [directory] [--lang language]
+                Generate project_flake, nix_shell, app_run, app_build, or btp.
   prefetch <url>
                 Print a fetchurl SRI hash.
   set-password  Set the local password for the configured user.

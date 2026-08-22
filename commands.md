@@ -317,20 +317,31 @@ nix-hlp fmt ~/projects/example --fail-on-change
 ### Project Templates
 
 ```bash
-nix-hlp create project_flake [directory]
-nix-hlp create nix_shell [directory]
-nix-hlp create app_run [directory]
-nix-hlp create app_build [directory]
-nix-hlp create btp [directory]
+nix-hlp gen project_flake [directory] [--lang language]
+nix-hlp gen nix_shell [directory] [--lang language]
+nix-hlp gen app_run [directory] [--lang language]
+nix-hlp gen app_build [directory] [--lang language]
+nix-hlp gen btp [directory] [--lang language]
 ```
 
-`project_flake` и `nix_shell` определяют язык по `Cargo.toml`, `pyproject.toml`,
-`requirements.txt`, `package.json`, `go.mod`, `pom.xml` или Gradle-файлам и
-добавляют подходящий базовый toolchain. `app_run` и `app_build` создают flake app
-для запуска или сборки проекта и являются взаимоисключающими стартовыми
-templates, потому что оба создают `flake.nix`. `btp` создаёт модульную структуру
-`flake.nix`, `nix/default.nix`, `nix/modules/project.nix` сразу с apps `run` и
-`build`.
+Detector учитывает manifests, lock-файлы, wrappers, package manager, framework
+и entrypoint. Поддерживаются Rust/Cargo, Python с uv/Poetry/Pipenv/pip, Node с
+bun/pnpm/Yarn/npm, Go, Java с Maven/Gradle и generic Make/CMake/Meson.
+
+Если каталог пуст, generator создаёт минимальную рабочую структуру в стиле
+package-manager init: manifest, `src`, entrypoint и тестовый каталог там, где он
+принят экосистемой. Для неоднозначного пустого проекта укажи язык явно:
+
+```bash
+nix-hlp gen project_flake ./service --lang rust
+nix-hlp gen btp ./backend --lang python
+```
+
+В существующем проекте исходники и manifests не перезаписываются: добавляется
+только выбранная Nix integration. `app_run` и `app_build` являются
+взаимоисключающими стартовыми templates, потому что оба создают `flake.nix`.
+`btp` создаёт `flake.nix`, `nix/default.nix`, `nix/modules/project.nix` сразу с
+apps `run` и `build`.
 
 Templates никогда не перезаписывают существующий `flake.nix`, `shell.nix` или
 каталог `nix/`.

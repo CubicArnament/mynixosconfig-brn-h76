@@ -4,10 +4,12 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
 TARGET="$1"
-LANGUAGE=$(detect_language "$TARGET")
-PACKAGES=$(language_packages "$LANGUAGE")
-RUN_COMMAND=$(run_command "$LANGUAGE" "$TARGET")
-BUILD_COMMAND=$(build_command "$LANGUAGE" "$TARGET")
+detect_project "$TARGET"
+scaffold_project
+PACKAGES=$(language_packages)
+RUN_COMMAND=$(run_command)
+BUILD_COMMAND=$(build_command)
+SHELL_HOOK=$(shell_hook)
 refuse_existing "$TARGET/flake.nix"
 refuse_existing "$TARGET/nix"
 mkdir -p "$TARGET/nix/modules"
@@ -45,6 +47,9 @@ in
   };
   devShells.\${system}.default = pkgs.mkShell {
     packages = [ ${PACKAGES} ];
+    shellHook = ''
+      ${SHELL_HOOK}
+    '';
   };
   checks.\${system}.default = projectModule.package;
 }
@@ -78,4 +83,5 @@ in
 }
 EOF
 
-printf "Created modular project flake for detected language: %s\n" "$LANGUAGE"
+print_project_summary
+printf "Created modular project flake with run and build apps.\n"

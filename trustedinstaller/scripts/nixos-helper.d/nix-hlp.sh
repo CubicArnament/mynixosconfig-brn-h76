@@ -15,7 +15,7 @@ COMMAND="${1:-switch}"
 
 case "$COMMAND" in
   -h|--help) COMMAND="help" ;;
-  switch|boot|test|build|home|update|status|generations|rollback|clean|diff|config-setup|prefetch|set-password|fmt|create) ;;
+  switch|boot|test|build|home|update|status|generations|rollback|clean|diff|config-setup|prefetch|set-password|fmt|gen) ;;
   *)
     printf "Unknown command: %s\n" "$COMMAND" >&2
     bash "$COMMANDS_DIR/help.sh" >&2
