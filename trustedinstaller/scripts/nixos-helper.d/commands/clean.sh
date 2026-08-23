@@ -11,4 +11,4 @@ fi
 
 printf "Removing generations older than %s days...\n" "$DAYS"
 elevate nix profile wipe-history --profile /nix/var/nix/profiles/system --older-than "${DAYS}d"
-elevate nix-collect-garbage -d
+elevate nix-collect-garbage --delete-older-than "${DAYS}d"

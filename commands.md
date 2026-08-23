@@ -319,6 +319,10 @@ nix-hlp prefetch https://example.com/source.tar.gz
 ```
 
 Root-команды автоматически используют доступный `run0`, `sudo` или `doas`.
+Автоматический Nix GC запускается еженедельно и удаляет system generations
+старше 14 дней. Отдельный Home Manager user timer еженедельно удаляет HM
+generations старше 14 дней. Snapper создаёт hourly snapshots и ежедневно
+применяет timeline/number/empty-pre-post cleanup limits.
 
 ### Форматирование
 
