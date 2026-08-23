@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, isInstaller ? false, ... }:
 {
   home.sessionVariables = {
     HSA_OVERRIDE_GFX_VERSION = "11.0.0";
@@ -20,11 +20,11 @@
     OLLAMA_KV_CACHE_TYPE = "q8_0";
   };
 
-  home.packages = with pkgs; [
+  home.packages = lib.optionals (!isInstaller) (with pkgs; [
     clinfo
     vulkan-tools
     rocmPackages.rocminfo
     rocmPackages.rocm-smi
     ollama
-  ];
+  ]);
 }

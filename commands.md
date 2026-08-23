@@ -22,6 +22,11 @@ sudo ./full-install.sh
 
 Введи `localhost` для установки на текущем ноутбуке или `user@IPv4` для
 удалённой цели. Wrapper отклоняет другие форматы и предварительно проверяет SSH.
+Он повторяет загрузки и отключает fallback на source build только при ошибке
+substituter. Первый этап пропускает тяжёлые desktop-пакеты без binary substitute.
+После первого boot systemd автоматически собирает полную конфигурацию на SSD;
+статус виден через `systemctl status complete-full-configuration`. В installer
+profile также не входят Ollama и user ROCm tools, но AMDGPU driver остаётся.
 
 Installer последовательно:
 

@@ -6,5 +6,8 @@ if [[ "$EUID" -ne 0 ]]; then
   exit 2
 fi
 
-export NIX_CONFIG="experimental-features = nix-command flakes"
+export NIX_CONFIG="
+experimental-features = nix-command flakes
+fallback = false
+"
 exec nix store gc

@@ -11,7 +11,13 @@ if [[ ! -c /dev/tty || ! -r /dev/tty || ! -w /dev/tty ]]; then
   exit 2
 fi
 
-export NIX_CONFIG="experimental-features = nix-command flakes"
+export NIX_CONFIG="
+experimental-features = nix-command flakes
+fallback = false
+filetransfer-retry-attempts = 10
+connect-timeout = 20
+stalled-download-timeout = 120
+"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
@@ -51,4 +57,8 @@ case "$TARGET" in
     ;;
 esac
 
-exec nix run --no-write-lock-file .#install-honor-magicbook -- "$TARGET"
+exec nix --option fallback false \
+  --option filetransfer-retry-attempts 10 \
+  --option connect-timeout 20 \
+  --option stalled-download-timeout 120 \
+  run --no-write-lock-file .#install-honor-magicbook -- "$TARGET"

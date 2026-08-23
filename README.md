@@ -43,6 +43,14 @@ Wrapper сам включает `nix-command flakes`, спрашивает `loca
 `user@IPv4`, проверяет SSH для удалённой цели и запускает flake installer. Если
 live ISO уже открыл root shell, убери `sudo`.
 
+Wrapper повторяет загрузки и устанавливает `fallback = false`: временная ошибка
+binary cache не превращается в source build. Пакеты без substitute всё равно
+нужно собирать, поэтому installer сначала ставит облегчённую загрузочную систему
+без тяжёлых desktop-пакетов. После первого boot systemd автоматически собирает
+и активирует полную конфигурацию уже на SSD. На первом этапе также пропускаются
+Ollama/ROCm user tools; драйвер AMDGPU и загрузочная hardware-конфигурация
+остаются включены.
+
 После неудачной live-сессии очистить недостижимые Nix store paths можно так:
 
 ```bash

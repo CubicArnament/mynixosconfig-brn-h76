@@ -1,4 +1,4 @@
-{ lib, pkgs, inputs, ... }:
+{ lib, pkgs, inputs, isInstaller ? false, ... }:
 let
   happ = pkgs.callPackage ../../../../dev/maintaining/happ.nix { };
 
@@ -22,5 +22,5 @@ let
   ];
 in
 {
-  home.packages = workingPackages ++ gamingPackages;
+  home.packages = lib.optionals (!isInstaller) (workingPackages ++ gamingPackages);
 }

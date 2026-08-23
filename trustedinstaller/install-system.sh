@@ -31,6 +31,7 @@ else
 fi
 
 HOST_NAME="honor-magicbook-x16-pro"
+INSTALL_CONFIG="${HOST_NAME}-install"
 LOCAL_DEVICE_PATHS_REL="local-device-paths.nix"
 
 if [[ ! -f flake.nix || ! -f "hosts/${HOST_NAME}/configuration.nix" ]]; then
@@ -57,7 +58,7 @@ case "$HOST" in
 
     printf "\n==> [local] Installing...\n"
     exec bash "$LIBEXEC_DIR/local/install.sh" \
-      "$HOST_NAME" "$LOCAL_DEVICE_PATHS_REL" "path:$REPO_ROOT"
+      "$INSTALL_CONFIG" "$LOCAL_DEVICE_PATHS_REL" "path:$REPO_ROOT"
     ;;
   *)
     printf "==> [remote] Detecting disks on %s...\n" "$HOST"
@@ -70,6 +71,6 @@ case "$HOST" in
 
     printf "\n==> [remote] Installing on %s...\n" "$HOST"
     exec bash "$LIBEXEC_DIR/remote/install.sh" \
-      "$HOST_NAME" "$HOST" "$LOCAL_DEVICE_PATHS_REL" "path:$REPO_ROOT"
+      "$INSTALL_CONFIG" "$HOST" "$LOCAL_DEVICE_PATHS_REL" "path:$REPO_ROOT"
     ;;
 esac

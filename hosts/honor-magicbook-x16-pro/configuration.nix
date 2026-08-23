@@ -1,4 +1,4 @@
-{ inputs, lib, hostName, ... }:
+{ config, inputs, lib, hostName, isInstaller ? false, ... }:
 {
   imports = [
     ./hardware.nix
@@ -36,7 +36,7 @@
   };
 
   # Ollama with ROCm support
-  services.ollama = {
+  services.ollama = lib.mkIf (!isInstaller) {
     enable = true;
     package = lib.mkDefault inputs.nixpkgs.legacyPackages.x86_64-linux.ollama-rocm;
     rocmOverrideGfx = "11.0.0"; # For Radeon 780M
@@ -48,6 +48,22 @@
       # KV cache quantization: q8_0 (balanced) or q4_0 (max memory savings)
       OLLAMA_KV_CACHE_TYPE = "q8_0";
     };
+  };
+
+  systemd.services.complete-full-configuration = lib.mkIf isInstaller {
+    description = "Build and activate the full NixOS configuration after installation";
+    wantedBy = [ "multi-user.target" ];
+    wants = [ "network-online.target" ];
+    after = [ "network-online.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      Restart = "on-failure";
+      RestartSec = "2min";
+    };
+    script = ''
+      ${config.system.build.nixos-rebuild}/bin/nixos-rebuild switch \
+        --flake "path:${inputs.self.outPath}#${hostName}"
+    '';
   };
 
   system.stateVersion = "26.05";

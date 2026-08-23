@@ -60,10 +60,10 @@
       cameraDevicePath = "";
     };
 
-    mkHost = { hostName, extraModules ? [], localDevicePaths ? {} }:
+    mkHost = { hostName, extraModules ? [], localDevicePaths ? {}, isInstaller ? false }:
       let
         sharedArgs = {
-          inherit inputs hostName user userName;
+          inherit inputs hostName isInstaller user userName;
           cameraDevicePath = "";
         } // localDevicePaths;
       in
@@ -169,6 +169,15 @@
     nixosConfigurations = nixpkgs.lib.optionalAttrs installationReady {
       ${honorHostName} = mkHost {
         hostName = honorHostName;
+        localDevicePaths = if honorLocalDevicePaths == null then {} else honorLocalDevicePaths;
+        extraModules = [
+          disko.nixosModules.disko
+          ./modules/nixos/disko/disko.nix
+        ];
+      };
+      "${honorHostName}-install" = mkHost {
+        hostName = honorHostName;
+        isInstaller = true;
         localDevicePaths = if honorLocalDevicePaths == null then {} else honorLocalDevicePaths;
         extraModules = [
           disko.nixosModules.disko
