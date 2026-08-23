@@ -1,8 +1,8 @@
-{ pkgs, lib, config, ... }:
+{ pkgs, lib, config, isInstaller ? false, ... }:
 let
   cfg = config.machine;
 in
-{
+lib.mkIf (!isInstaller) {
   virtualisation.libvirtd = {
     enable = true;
     qemu = {

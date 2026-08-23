@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ "$EUID" -ne 0 ]]; then
-  printf "Run this script as root, for example: sudo ./full-install.sh\n" >&2
+  printf "Run this script as root, for example: sudo ./bootstrap.sh\n" >&2
   exit 2
 fi
 

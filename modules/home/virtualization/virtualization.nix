@@ -1,5 +1,5 @@
-{ pkgs, ... }:
-{
+{ lib, pkgs, isInstaller ? false, ... }:
+lib.mkIf (!isInstaller) {
   home.packages = with pkgs; [
     qemu
     spice-gtk

@@ -1,11 +1,11 @@
-_:
+{ lib, isInstaller ? false, ... }:
 let
   flatpakPackages = [
     "com.usebottles.bottles"
     "org.telegram.desktop"
   ];
 in
-{
+lib.mkIf (!isInstaller) {
   services.flatpak = {
     enable = true;
 

@@ -1,5 +1,5 @@
 
-{ pkgs, inputs, ... }:
+{ pkgs, inputs, lib, isInstaller ? false, ... }:
 {
   imports = [
     (inputs.nixos-hardware + "/common/gpu/amd")
@@ -7,23 +7,23 @@
 
   hardware = {
     graphics = {
-      enable = true;
-      enable32Bit = true;
+      enable = !isInstaller;
+      enable32Bit = !isInstaller;
 
-      extraPackages = with pkgs; [
+      extraPackages = lib.optionals (!isInstaller) (with pkgs; [
         rocmPackages.clr
         rocmPackages.clr.icd
-      ];
+      ]);
 
-      extraPackages32 = with pkgs; [
+      extraPackages32 = lib.optionals (!isInstaller) (with pkgs; [
         driversi686Linux.mesa
-      ];
+      ]);
     };
 
     amdgpu = {
       initrd.enable = true;
 
-      opencl.enable = true;
+      opencl.enable = !isInstaller;
 
       overdrive.enable = false;
     };
@@ -33,9 +33,9 @@
     "amdgpu.dc=1"
   ];
 
-  environment.variables.ROCM_PATH = "/opt/rocm";
+  environment.variables.ROCM_PATH = lib.mkIf (!isInstaller) "/opt/rocm";
 
-  systemd.tmpfiles.rules =
+  systemd.tmpfiles.rules = lib.optionals (!isInstaller) (
     let
       rocmRuntime = pkgs.symlinkJoin {
         name = "rocm-runtime";
@@ -44,6 +44,6 @@
     in [
       "L+ /opt/rocm - - - - ${rocmRuntime}"
       "L+ /opt/amdgpu/share/libdrm/amdgpu.ids - - - - ${pkgs.libdrm}/share/libdrm/amdgpu.ids"
-    ];
+    ]);
 
 }

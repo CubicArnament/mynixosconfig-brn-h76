@@ -1,5 +1,5 @@
-{ pkgs, ... }:
-{
+{ lib, pkgs, isInstaller ? false, ... }:
+lib.mkIf (!isInstaller) {
   gtk = {
     enable = true;
     iconTheme = {

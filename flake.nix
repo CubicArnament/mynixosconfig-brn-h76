@@ -71,10 +71,11 @@
         inherit system;
         specialArgs = sharedArgs;
         modules = [
-          home-manager.nixosModules.home-manager
           nix-flatpak.nixosModules.nix-flatpak
           zapret2-nix.nixosModules.default
           ./hosts/${hostName}/configuration.nix
+        ] ++ nixpkgs.lib.optionals (!isInstaller) [
+          home-manager.nixosModules.home-manager
           {
             home-manager = {
               useGlobalPkgs = true;

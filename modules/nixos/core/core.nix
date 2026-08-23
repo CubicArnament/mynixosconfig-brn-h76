@@ -1,5 +1,5 @@
 
-{ lib, pkgs, user, ... }:
+{ lib, pkgs, user, isInstaller ? false, ... }:
 {
   nix = {
     settings = {
@@ -28,7 +28,7 @@
       options = "grp:alt_shift_toggle";
     };
 
-    pipewire = {
+    pipewire = lib.mkIf (!isInstaller) {
       enable = true;
       pulse.enable = true;
       alsa = {
@@ -39,9 +39,9 @@
     };
   };
 
-  security.rtkit.enable = true;
+  security.rtkit.enable = !isInstaller;
 
-  xdg.portal = {
+  xdg.portal = lib.mkIf (!isInstaller) {
     enable = true;
     xdgOpenUsePortal = true;
     extraPortals = [

@@ -17,7 +17,7 @@ Installer поддерживает локальную установку с ISO 
 git clone https://github.com/CubicArnament/mynixosconfig-brn-h76.git
 cd mynixosconfig-brn-h76
 export NIX_CONFIG="experimental-features = nix-command flakes"
-sudo ./full-install.sh
+sudo ./bootstrap.sh
 ```
 
 Введи `localhost` для установки на текущем ноутбуке или `user@IPv4` для
@@ -27,6 +27,15 @@ substituter. Первый этап пропускает тяжёлые desktop-�
 После первого boot systemd автоматически собирает полную конфигурацию на SSD;
 статус виден через `systemctl status complete-full-configuration`. В installer
 profile также не входят Ollama и user ROCm tools, но AMDGPU driver остаётся.
+
+Первый boot консольный. Если Wi-Fi не подключился автоматически, войди как
+`wkubearnament`, запусти `nmtui`, затем:
+
+```bash
+run0 systemctl restart complete-full-configuration
+```
+
+После успешного post-install switch появится GNOME/GDM и остальные пакеты.
 
 Installer последовательно:
 

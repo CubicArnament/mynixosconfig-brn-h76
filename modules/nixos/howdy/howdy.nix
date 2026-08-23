@@ -1,7 +1,7 @@
-{ lib, config, cameraDevicePath ? "", ... }:
+{ lib, config, cameraDevicePath ? "", isInstaller ? false, ... }:
 let
   cfg = config.machine;
-  enableHowdy = !cfg.isVm && !cfg.fprint.enable && cameraDevicePath != "";
+  enableHowdy = !isInstaller && !cfg.isVm && !cfg.fprint.enable && cameraDevicePath != "";
 in
 {
   security.pam = {
@@ -68,6 +68,6 @@ in
       };
     };
 
-    gnome.gnome-keyring.enable = true;
+    gnome.gnome-keyring.enable = lib.mkIf (!isInstaller) true;
   };
 }

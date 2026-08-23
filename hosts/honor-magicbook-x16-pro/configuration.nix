@@ -26,7 +26,7 @@
     priority = 100;
   };
 
-  services.zapret2 = {
+  services.zapret2 = lib.mkIf (!isInstaller) {
     enable = true;
     presets = [ "youtube" "discord" "general" ];
     defaultPreset = "youtube";

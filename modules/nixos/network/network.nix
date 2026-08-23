@@ -1,5 +1,5 @@
 
-{ pkgs, ... }:
+{ pkgs, lib, isInstaller ? false, ... }:
 {
   networking = {
     networkmanager = {
@@ -14,12 +14,12 @@
   hardware = {
     firmware = [ pkgs.linux-firmware ];
 
-    bluetooth = {
+    bluetooth = lib.mkIf (!isInstaller) {
       enable = true;
       powerOnBoot = true;
       settings.General.Experimental = true;
     };
   };
 
-  services.blueman.enable = true;
+  services.blueman.enable = !isInstaller;
 }

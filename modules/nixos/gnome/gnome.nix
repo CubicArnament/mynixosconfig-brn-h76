@@ -1,9 +1,9 @@
-{ pkgs, lib, config, ... }:
+{ pkgs, lib, config, isInstaller ? false, ... }:
 let
   cfg = config.machine;
   isHuaweiFamily = builtins.elem cfg.hardwareVendor [ "honor" "huawei" ];
 in
-{
+lib.mkIf (!isInstaller) {
   services = {
     xserver = {
       enable = true;

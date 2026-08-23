@@ -36,7 +36,7 @@
 Основной запуск выполняется коротким root-only wrapper:
 
 ```bash
-sudo ./full-install.sh
+sudo ./bootstrap.sh
 ```
 
 Wrapper сам включает `nix-command flakes`, спрашивает `localhost` или
@@ -47,9 +47,10 @@ Wrapper повторяет загрузки и устанавливает `fallb
 binary cache не превращается в source build. Пакеты без substitute всё равно
 нужно собирать, поэтому installer сначала ставит облегчённую загрузочную систему
 без тяжёлых desktop-пакетов. После первого boot systemd автоматически собирает
-и активирует полную конфигурацию уже на SSD. На первом этапе также пропускаются
-Ollama/ROCm user tools; драйвер AMDGPU и загрузочная hardware-конфигурация
-остаются включены.
+и активирует полную конфигурацию уже на SSD. Bootstrap является консольным: без
+Home Manager, GNOME/GDM, Mesa userspace, PipeWire, Flatpak, Steam, libvirt,
+Ollama/ROCm user tools, `nix-hlp`, dev tools, Bluetooth GUI и fwupd. Kernel AMDGPU, framebuffer,
+firmware, NetworkManager, bootloader и загрузочная hardware-конфигурация остаются.
 
 После неудачной live-сессии очистить недостижимые Nix store paths можно так:
 

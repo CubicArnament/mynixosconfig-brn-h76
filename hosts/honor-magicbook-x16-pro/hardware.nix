@@ -1,4 +1,4 @@
-{ lib, pkgs, inputs, ... }:
+{ lib, pkgs, inputs, isInstaller ? false, ... }:
 {
   imports = [
     (inputs.nixos-hardware + "/common/pc/laptop")
@@ -29,7 +29,7 @@
 
   hardware.enableAllFirmware = true;
 
-  services.fwupd.enable = true;
+  services.fwupd.enable = !isInstaller;
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 

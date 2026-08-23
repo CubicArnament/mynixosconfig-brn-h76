@@ -1,4 +1,4 @@
-{ inputs, pkgs, hostName, userName, ... }:
+{ inputs, lib, pkgs, hostName, userName, isInstaller ? false, ... }:
 let
   formatter = (inputs.treefmt-nix.lib.evalModule pkgs ../../dev/treefmt.nix).config.build.wrapper;
   nixHlp = pkgs.callPackage ../../trustedinstaller/scripts/nixos-helper.d/drv.nix {
@@ -11,5 +11,5 @@ let
   };
 in
 {
-  environment.systemPackages = [ nixHlp ];
+  environment.systemPackages = lib.optionals (!isInstaller) [ nixHlp ];
 }
