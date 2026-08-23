@@ -52,6 +52,11 @@ Home Manager, GNOME/GDM, Mesa userspace, PipeWire, Flatpak, Steam, libvirt,
 Ollama/ROCm user tools, `nix-hlp`, dev tools, Bluetooth GUI и fwupd. Kernel AMDGPU, framebuffer,
 firmware, NetworkManager, bootloader и загрузочная hardware-конфигурация остаются.
 
+Для первой загрузки bootstrap использует UEFI `systemd-boot`. Это обходит
+поведение `disko-install`, которое подставляет install-диск в `grub.devices` и
+иначе пытается установить legacy `i386-pc` GRUB. Полный post-install switch
+заменяет systemd-boot на настроенный UEFI GRUB.
+
 После неудачной live-сессии очистить недостижимые Nix store paths можно так:
 
 ```bash

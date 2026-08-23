@@ -36,6 +36,9 @@ run0 systemctl restart complete-full-configuration
 ```
 
 После успешного post-install switch появится GNOME/GDM и остальные пакеты.
+Первая загрузка выполняется через UEFI systemd-boot; полный switch заменяет его
+на UEFI GRUB. Если старый запуск упал на `Installing for i386-pc platform`, не
+перезагружайся: обнови репозиторий и повтори bootstrap, диск будет размечен заново.
 
 Installer последовательно:
 
