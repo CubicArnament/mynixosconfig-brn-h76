@@ -33,14 +33,21 @@
 Установка выполняется **только локально** с прямым доступом к экрану и клавиатуре.
 Запускать установку нужно с NixOS ISO на целевом ноутбуке, а не с Windows и не по SSH.
 
-Установка выполняется через flake app:
+Основной запуск выполняется коротким root-only wrapper:
 
 ```bash
-sudo nix --extra-experimental-features "nix-command flakes" run .#install-honor-magicbook -- localhost
+sudo ./full-install.sh
 ```
 
-Если live ISO уже открыл root shell, убери `sudo`. Installer проверяет root-права
-до детекта дисков и запроса пароля.
+Wrapper сам включает `nix-command flakes`, спрашивает `localhost` или
+`user@IPv4`, проверяет SSH для удалённой цели и запускает flake installer. Если
+live ISO уже открыл root shell, убери `sudo`.
+
+После неудачной live-сессии очистить недостижимые Nix store paths можно так:
+
+```bash
+sudo ./store-gc.sh
+```
 
 В live/minimal среде `nix-command` и `flakes` нередко выключены по умолчанию,
 поэтому либо используй эту полную форму, либо заранее выстави:

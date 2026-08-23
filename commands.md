@@ -9,17 +9,19 @@ export NIX_CONFIG="experimental-features = nix-command flakes"
 
 ## Установка
 
-Установка поддерживается только локально с NixOS ISO на целевом Honor
-MagicBook. Нужен прямой доступ к экрану и клавиатуре. SSH/headless установка
-отключена.
+Installer поддерживает локальную установку с ISO и удалённую установку на ISO
+через SSH. Скрипт запускается от root и всегда требует локальный интерактивный
+терминал для подтверждений.
 
 ```bash
 git clone https://github.com/CubicArnament/mynixosconfig-brn-h76.git
 cd mynixosconfig-brn-h76
 export NIX_CONFIG="experimental-features = nix-command flakes"
-sudo nix --extra-experimental-features "nix-command flakes" \
-  run .#install-honor-magicbook -- localhost
+sudo ./full-install.sh
 ```
+
+Введи `localhost` для установки на текущем ноутбуке или `user@IPv4` для
+удалённой цели. Wrapper отклоняет другие форматы и предварительно проверяет SSH.
 
 Installer последовательно:
 
@@ -46,8 +48,12 @@ nix store gc
 
 После очистки повтори installer. Не запускай полный system build в том же live
 сеансе перед установкой: он может заполнить RAM/overlay ISO.
-Сам installer проверяет store заранее и предлагает выполнить GC после ввода
-`YES`, если места недостаточно.
+
+Отдельная короткая команда очистки после неудачной попытки:
+
+```bash
+sudo ./store-gc.sh
+```
 
 ## Runtime-Файлы
 

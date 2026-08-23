@@ -236,7 +236,7 @@ printf "Running disko-install...\n"
 
 set +e
 nix --extra-experimental-features "nix-command flakes" \
-  run .#disko-install -- \
+  run --no-write-lock-file .#disko-install -- \
   --flake "${FLAKE_REF}#${HOST_NAME}" \
   --disk main "$DISK_DEVICE"
 INSTALL_STATUS=$?

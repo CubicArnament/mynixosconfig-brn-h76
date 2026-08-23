@@ -3,7 +3,7 @@ set -euo pipefail
 
 HOST="${1:-}"
 if [[ -z "$HOST" ]]; then
-  printf "usage: install-honor-magicbook localhost\n" >&2
+  printf "usage: install-honor-magicbook <localhost|user@IPv4>\n" >&2
   exit 1
 fi
 
@@ -60,9 +60,16 @@ case "$HOST" in
       "$HOST_NAME" "$LOCAL_DEVICE_PATHS_REL" "path:$REPO_ROOT"
     ;;
   *)
-    printf "ERROR: Only localhost installation is supported.\n" >&2
-    printf "This installer requires direct physical access to the keyboard and screen.\n" >&2
-    printf "Boot the NixOS ISO on the Honor MagicBook and run as root: nix run .#install-honor-magicbook -- localhost\n" >&2
-    exit 2
+    printf "==> [remote] Detecting disks on %s...\n" "$HOST"
+    FETCH_RESULT=$(ssh "$HOST" "sh -s -- '' ''" < "$LIBEXEC_DIR/remote/fetch.sh")
+    export FETCH_RESULT
+    bash "$LIBEXEC_DIR/local/fetch.sh" "$LOCAL_DEVICE_PATHS_REL"
+
+    printf "\n==> [remote] Generating initial password...\n"
+    bash "$LIBEXEC_DIR/local/gen-hpasswd.sh" "$HPASSWD_REL"
+
+    printf "\n==> [remote] Installing on %s...\n" "$HOST"
+    exec bash "$LIBEXEC_DIR/remote/install.sh" \
+      "$HOST_NAME" "$HOST" "$LOCAL_DEVICE_PATHS_REL" "path:$REPO_ROOT"
     ;;
 esac
