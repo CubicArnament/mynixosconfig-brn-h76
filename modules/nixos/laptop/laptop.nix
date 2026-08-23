@@ -1,6 +1,7 @@
 { lib, config, ... }:
 let
   cfg = config.machine;
+  isHuaweiFamily = builtins.elem cfg.hardwareVendor [ "honor" "huawei" ];
   batteryChargeStart = 60;
   batteryChargeStop = 80;
   fnLockDefault = 1;
@@ -13,11 +14,11 @@ in
 
   hardware.cpu.intel.updateMicrocode = lib.mkIf (!cfg.isVm && cfg.cpuVendor == "intel") true;
 
-  services.udev.extraRules = lib.mkIf (!cfg.isVm && cfg.isLaptop) ''
+  services.udev.extraRules = lib.mkIf (!cfg.isVm && cfg.isLaptop && isHuaweiFamily) ''
     ACTION=="add", SUBSYSTEM=="platform", KERNEL=="huawei-wmi", TAG+="systemd", ENV{SYSTEMD_WANTS}+="huawei-wmi-apply.service"
   '';
 
-  systemd.services.huawei-wmi-apply = lib.mkIf (!cfg.isVm && cfg.isLaptop) {
+  systemd.services.huawei-wmi-apply = lib.mkIf (!cfg.isVm && cfg.isLaptop && isHuaweiFamily) {
     description = "Apply Honor Huawei WMI battery and Fn-lock settings";
     wants = [ "systemd-udev-settle.service" ];
     after = [ "systemd-udev-settle.service" ];

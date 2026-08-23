@@ -1,6 +1,7 @@
 { lib, config, ... }:
 let
   cfg = config.machine;
+  isHuaweiFamily = builtins.elem cfg.hardwareVendor [ "honor" "huawei" ];
 in
 {
 
@@ -14,7 +15,7 @@ in
     "acpi.ec_no_wakeup=1"
   ];
 
-  boot.extraModprobeConfig = lib.mkIf (!cfg.isVm) ''
+  boot.extraModprobeConfig = lib.mkIf (!cfg.isVm && isHuaweiFamily) ''
     options huawei_wmi report_brightness=1
   '';
 

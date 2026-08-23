@@ -84,7 +84,7 @@ printf "  board_vendor    = %s\n" "$DMI_BOARD_VENDOR"
 printf "  board_name      = %s\n" "$DMI_BOARD_NAME"
 
 if [[ "$DMI_VENDOR_TEXT" != *HONOR* && "$DMI_VENDOR_TEXT" != *HUAWEI* ]] \
-  || [[ "$DMI_MODEL_TEXT" != *BRN-H76* && "$DMI_MODEL_TEXT" != *"MAGICBOOK X16 PRO"* ]]; then
+  || { [[ ! "$DMI_MODEL_TEXT" =~ BRN-H[A-Z0-9]{2} ]] && [[ "$DMI_MODEL_TEXT" != *"MAGICBOOK X16 PRO"* ]]; }; then
   printf "Type YES to continue with this unrecognized remote host: " > /dev/tty
   DMI_CONFIRM=""; IFS= read -r DMI_CONFIRM < /dev/tty || true
   [[ "$DMI_CONFIRM" == "YES" ]] || { printf "Aborted.\n" >&2; exit 2; }

@@ -32,7 +32,7 @@ Installer последовательно:
 
 Installer также показывает `sys_vendor`, `product_name`, `product_version`,
 `product_family`, `board_vendor` и `board_name`. Варианты HONOR/HUAWEI с
-`BRN-H76` или `MagicBook X16 Pro` принимаются автоматически. Для другого DMI
+семейства `BRN-Hxx` или `MagicBook X16 Pro` принимаются автоматически. Для другого DMI
 нужно вручную ввести `YES`.
 
 `disko-install` полностью уничтожает данные выбранного диска. Таймаутов у

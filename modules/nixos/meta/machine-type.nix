@@ -30,6 +30,16 @@ in
 {
   options.machine = {
 
+    hardwareVendor = lib.mkOption {
+      type = lib.types.enum [ "honor" "huawei" "other" ];
+      default = "other";
+      description = ''
+        System manufacturer used for vendor-specific kernel modules, hwdb and
+        platform services. Set this explicitly in the host configuration;
+        Nix evaluation must not depend on the build machine's runtime DMI.
+      '';
+    };
+
     isVm = lib.mkOption {
       type = lib.types.bool;
       default = detectedIsVm;

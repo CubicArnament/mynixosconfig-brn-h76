@@ -75,7 +75,7 @@ DMI_MODEL_TEXT=$(normalize_dmi "$DMI_PRODUCT_NAME $DMI_PRODUCT_VERSION $DMI_PROD
 KNOWN_VENDOR=0
 KNOWN_MODEL=0
 [[ "$DMI_VENDOR_TEXT" == *HONOR* || "$DMI_VENDOR_TEXT" == *HUAWEI* ]] && KNOWN_VENDOR=1
-[[ "$DMI_MODEL_TEXT" == *BRN-H76* || "$DMI_MODEL_TEXT" == *"MAGICBOOK X16 PRO"* ]] && KNOWN_MODEL=1
+[[ "$DMI_MODEL_TEXT" =~ BRN-H[A-Z0-9]{2} || "$DMI_MODEL_TEXT" == *"MAGICBOOK X16 PRO"* ]] && KNOWN_MODEL=1
 
 printf "Detected target hardware:\n"
 printf "  sys_vendor      = %s\n" "$DMI_SYS_VENDOR"

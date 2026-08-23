@@ -1,6 +1,7 @@
 { pkgs, lib, config, ... }:
 let
   cfg = config.machine;
+  isHuaweiFamily = builtins.elem cfg.hardwareVendor [ "honor" "huawei" ];
 in
 {
   services = {
@@ -14,7 +15,7 @@ in
       gnome.enable = true;
     };
 
-    udev = lib.mkIf (!cfg.isVm) {
+    udev = lib.mkIf (!cfg.isVm && isHuaweiFamily) {
       extraHwdb = ''
         evdev:name:Huawei WMI hotkeys:*
           KEYBOARD_KEY_0288=camera

@@ -7,6 +7,7 @@
   ];
 
   machine = {
+    hardwareVendor = lib.mkForce "honor";
     isVm = lib.mkForce false;
     cpuVendor = lib.mkForce "amd";
     gpuVendor = lib.mkForce "amd";
