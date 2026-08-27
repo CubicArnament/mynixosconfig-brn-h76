@@ -167,4 +167,4 @@ if ! nix --extra-experimental-features "nix-command flakes" \
 fi
 
 unset HPASSWD
-printf "Remote installation complete. Reboot the target and change the initial password immediately.\n"
+printf "Remote bootstrap complete. Reboot the target, clone the repository and perform the documented full switch.\n"

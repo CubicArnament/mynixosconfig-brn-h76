@@ -98,7 +98,7 @@
       then nixpkgs.lib.removeSuffix "\n" (builtins.readFile honorHpasswdFile)
       else "";
     honorHpasswdValid = builtins.match "\\$(y|6)\\$.*" honorHpasswd != null;
-    installationReady =
+    bootstrapReady =
       honorLocalDevicePaths != null && honorHpasswdValid;
 
     fetchTargetDevicePaths = pkgs.callPackage ./trustedinstaller/remote/drv.nix { };
@@ -167,7 +167,7 @@
       };
     };
 
-    nixosConfigurations = nixpkgs.lib.optionalAttrs installationReady {
+    nixosConfigurations = nixpkgs.lib.optionalAttrs (honorLocalDevicePaths != null) {
       ${honorHostName} = mkHost {
         hostName = honorHostName;
         localDevicePaths = if honorLocalDevicePaths == null then {} else honorLocalDevicePaths;
@@ -176,6 +176,7 @@
           ./modules/nixos/disko/disko.nix
         ];
       };
+    } // nixpkgs.lib.optionalAttrs bootstrapReady {
       "${honorHostName}-install" = mkHost {
         hostName = honorHostName;
         isInstaller = true;
@@ -183,6 +184,9 @@
         extraModules = [
           disko.nixosModules.disko
           ./modules/nixos/disko/disko.nix
+          {
+            environment.etc."nixos-bootstrap/local-device-paths.nix".source = honorLocalDevicePathsFile;
+          }
         ];
       };
     };

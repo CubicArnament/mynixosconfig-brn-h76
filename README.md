@@ -46,11 +46,29 @@ live ISO уже открыл root shell, убери `sudo`.
 Wrapper повторяет загрузки и устанавливает `fallback = false`: временная ошибка
 binary cache не превращается в source build. Пакеты без substitute всё равно
 нужно собирать, поэтому installer сначала ставит облегчённую загрузочную систему
-без тяжёлых desktop-пакетов. После первого boot systemd автоматически собирает
-и активирует полную конфигурацию уже на SSD. Bootstrap является консольным: без
+без тяжёлых desktop-пакетов. После первого boot полная конфигурация запускается
+вручную с подробными логами уже на SSD. Bootstrap является консольным: без
 Home Manager, GNOME/GDM, Mesa userspace, PipeWire, Flatpak, Steam, libvirt,
 Ollama/ROCm user tools, `nix-hlp`, dev tools, Bluetooth GUI и fwupd. Kernel AMDGPU, framebuffer,
 firmware, NetworkManager, bootloader и загрузочная hardware-конфигурация остаются.
+
+После входа подключи сеть через `nmtui`, клонируй репозиторий, восстанови
+сохранённый device-файл и запусти полный switch:
+
+```bash
+git clone https://github.com/CubicArnament/mynixosconfig-brn-h76.git
+cd mynixosconfig-brn-h76
+cp /etc/nixos-bootstrap/local-device-paths.nix ./local-device-paths.nix
+run0 nixos-rebuild switch \
+  --flake "path:$PWD#honor-magicbook-x16-pro" \
+  --show-trace --print-build-logs --log-format bar-with-logs
+```
+
+После успешного switch появится `nix-hlp`. Привяжи текущий clone к `/etc/nixos`:
+
+```bash
+nix-hlp config-setup
+```
 
 Для первой загрузки bootstrap использует UEFI `systemd-boot`. Это обходит
 поведение `disko-install`, которое подставляет install-диск в `grub.devices` и
@@ -111,8 +129,9 @@ export NIX_CONFIG="experimental-features = nix-command flakes"
 Файлы `local-device-paths.nix` и `env.hpasswd` не попадают в Git (`.gitignore`).
 После их генерации installer передаёт Disko ссылку `path:<repo>#<host>`, поэтому
 Nix включает ignored-файлы в source. Обычный `.#...` продолжает использовать
-Git-filtered source и не видит эти файлы. Host output появляется только когда
-присутствуют оба generated-файла, поэтому неполная конфигурация не собирается.
+Git-filtered source и не видит эти файлы. Bootstrap output требует оба файла;
+полный post-bootstrap output требует только `local-device-paths.nix`, потому что
+начальный пароль уже записан в `/etc/shadow`.
 
 Самая важная особенность дисков:
 

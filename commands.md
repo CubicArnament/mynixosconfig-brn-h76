@@ -24,18 +24,31 @@ sudo ./bootstrap.sh
 удалённой цели. Wrapper отклоняет другие форматы и предварительно проверяет SSH.
 Он повторяет загрузки и отключает fallback на source build только при ошибке
 substituter. Первый этап пропускает тяжёлые desktop-пакеты без binary substitute.
-После первого boot systemd автоматически собирает полную конфигурацию на SSD;
-статус виден через `systemctl status complete-full-configuration`. В installer
-profile также не входят Ollama и user ROCm tools, но AMDGPU driver остаётся.
+После первого boot полный switch запускается вручную с видимыми логами. В
+installer profile также не входят Ollama и user ROCm tools, но AMDGPU driver
+остаётся.
 
-Первый boot консольный. Если Wi-Fi не подключился автоматически, войди как
-`wkubearnament`, запусти `nmtui`, затем:
+Первый boot консольный. Войди как `wkubearnament`, при необходимости подключи
+Wi-Fi через `nmtui`, затем:
 
 ```bash
-run0 systemctl restart complete-full-configuration
+git clone https://github.com/CubicArnament/mynixosconfig-brn-h76.git
+cd mynixosconfig-brn-h76
+cp /etc/nixos-bootstrap/local-device-paths.nix ./local-device-paths.nix
+
+run0 nixos-rebuild switch \
+  --flake "path:$PWD#honor-magicbook-x16-pro" \
+  --show-trace \
+  --print-build-logs \
+  --log-format bar-with-logs
 ```
 
-После успешного post-install switch появится GNOME/GDM и остальные пакеты.
+После успешного switch появятся GNOME/GDM, `nix-hlp` и остальные пакеты:
+
+```bash
+nix-hlp config-setup
+```
+
 Первая загрузка выполняется через UEFI systemd-boot; полный switch заменяет его
 на UEFI GRUB. Если старый запуск упал на `Installing for i386-pc platform`, не
 перезагружайся: обнови репозиторий и повтори bootstrap, диск будет размечен заново.
@@ -85,7 +98,8 @@ env.hpasswd
 
 - приложения запускаются через `.#...`;
 - host evaluation и system build запускаются через `path:$PWD#...`;
-- host output существует только когда присутствуют оба валидных runtime-файла.
+- bootstrap output требует оба runtime-файла;
+- полный host output после установки требует только `local-device-paths.nix`.
 
 Проверка готовности:
 
@@ -94,12 +108,10 @@ test -s local-device-paths.nix && echo "disk config: OK"
 test -s env.hpasswd && echo "password hash: OK"
 ```
 
-Если Nix сообщает, что `nixosConfigurations.honor-magicbook-x16-pro` не
-существует, сначала создай оба файла на целевом ноутбуке:
+Если полный host output отсутствует, создай или восстанови device-файл:
 
 ```bash
-nix run .#fetch-target-device-paths -- localhost
-nix run .#gen-hpasswd
+cp /etc/nixos-bootstrap/local-device-paths.nix ./local-device-paths.nix
 ```
 
 ## Ручная Подготовка
