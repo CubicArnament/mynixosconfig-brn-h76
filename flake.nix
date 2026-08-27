@@ -184,9 +184,6 @@
         extraModules = [
           disko.nixosModules.disko
           ./modules/nixos/disko/disko.nix
-          {
-            environment.etc."nixos-bootstrap/local-device-paths.nix".source = honorLocalDevicePathsFile;
-          }
         ];
       };
     };

@@ -34,14 +34,14 @@ Wi-Fi через `nmtui`, затем:
 ```bash
 git clone https://github.com/CubicArnament/mynixosconfig-brn-h76.git
 cd mynixosconfig-brn-h76
-cp /etc/nixos-bootstrap/local-device-paths.nix ./local-device-paths.nix
-
-run0 nixos-rebuild switch \
-  --flake "path:$PWD#honor-magicbook-x16-pro" \
-  --show-trace \
-  --print-build-logs \
-  --log-format bar-with-logs
+./post-install.sh
 ```
+
+Wrapper read-only определяет текущий root-диск, создаёт `local-device-paths.nix`
+и запускает полный switch с `--no-reexec`, `--show-trace` и build logs. Bootstrap-версия
+`nixos-rebuild-ng` без `--no-reexec` пытается получить
+`config.system.build.nixos-rebuild` из ещё не активированного полного output.
+После первого успешного switch этот флаг больше не обязателен.
 
 После успешного switch появятся GNOME/GDM, `nix-hlp` и остальные пакеты:
 
@@ -111,7 +111,7 @@ test -s env.hpasswd && echo "password hash: OK"
 Если полный host output отсутствует, создай или восстанови device-файл:
 
 ```bash
-cp /etc/nixos-bootstrap/local-device-paths.nix ./local-device-paths.nix
+INSTALL_DISK_FILTER=system nix run .#fetch-target-device-paths -- localhost
 ```
 
 ## Ручная Подготовка

@@ -52,17 +52,21 @@ Home Manager, GNOME/GDM, Mesa userspace, PipeWire, Flatpak, Steam, libvirt,
 Ollama/ROCm user tools, `nix-hlp`, dev tools, Bluetooth GUI и fwupd. Kernel AMDGPU, framebuffer,
 firmware, NetworkManager, bootloader и загрузочная hardware-конфигурация остаются.
 
-После входа подключи сеть через `nmtui`, клонируй репозиторий, восстанови
-сохранённый device-файл и запусти полный switch:
+После входа подключи сеть через `nmtui`, клонируй репозиторий и запусти wrapper.
+Он сам read-only определит диск текущего root filesystem и выполнит полный
+switch с `--no-reexec` и подробными логами:
 
 ```bash
 git clone https://github.com/CubicArnament/mynixosconfig-brn-h76.git
 cd mynixosconfig-brn-h76
-cp /etc/nixos-bootstrap/local-device-paths.nix ./local-device-paths.nix
-run0 nixos-rebuild switch \
-  --flake "path:$PWD#honor-magicbook-x16-pro" \
-  --show-trace --print-build-logs --log-format bar-with-logs
+./post-install.sh
 ```
+
+Wrapper создаёт `local-device-paths.nix` для текущего root-диска и запускает
+`nixos-rebuild switch --no-reexec` с подробными логами. `--no-reexec` обязателен
+только для первого перехода с bootstrap: он запрещает старому
+`nixos-rebuild-ng` искать собственный executable внутри ещё не активированной
+полной конфигурации. `/etc/nixos-bootstrap` для этого workflow не требуется.
 
 После успешного switch появится `nix-hlp`. Привяжи текущий clone к `/etc/nixos`:
 
