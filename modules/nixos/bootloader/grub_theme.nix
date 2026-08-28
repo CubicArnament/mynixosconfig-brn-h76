@@ -39,5 +39,6 @@ pkgs.runCommandLocal "grub-theme-cold-nixos" { } ''
   }
   EOF
 
-  ln -s ${pkgs.nixos-artwork.wallpapers.simple-dark-gray-bootloader.gnomeFilePath} "$out/background.png"
+  # GRUB copies the theme to the VFAT ESP at /boot; VFAT cannot store symlinks.
+  cp ${pkgs.nixos-artwork.wallpapers.simple-dark-gray-bootloader.gnomeFilePath} "$out/background.png"
 ''
