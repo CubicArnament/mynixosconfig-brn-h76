@@ -121,9 +121,47 @@
         "nix-flatpak": "nix-flatpak",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs",
+        "tg-ws-proxy": "tg-ws-proxy",
         "treefmt-nix": "treefmt-nix",
         "zapret2-nix": "zapret2-nix",
         "zen-browser": "zen-browser"
+      }
+    },
+    "tg-ws-proxy": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "tg-ws-proxy-src": "tg-ws-proxy-src"
+      },
+      "locked": {
+        "lastModified": 1776260769,
+        "narHash": "sha256-9/aVUVEW/7aiq1QxUBR4o9Q9TV9lm6EZFQcBHvz/gdA=",
+        "ref": "refs/heads/main",
+        "rev": "144a8670ce3d55fdca345c86f3351f72f357d4c8",
+        "revCount": 5,
+        "type": "git",
+        "url": "https://github.com/pialtor/tg-ws-proxy-flake.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://github.com/pialtor/tg-ws-proxy-flake.git"
+      }
+    },
+    "tg-ws-proxy-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1776192974,
+        "narHash": "sha256-xOzFclddqk5ILz2cp3It9aW7vR9+OoTgf9Jx5BcHkAA=",
+        "owner": "Flowseal",
+        "repo": "tg-ws-proxy",
+        "rev": "548ec05fc51678d149dc89df4ba795d457b11192",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Flowseal",
+        "repo": "tg-ws-proxy",
+        "type": "github"
       }
     },
     "treefmt-nix": {

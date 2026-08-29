@@ -7,6 +7,7 @@ let
     inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
     onlyoffice-desktopeditors
     inputs.flclashx.packages.${pkgs.stdenv.hostPlatform.system}.flclashx
+    inputs.tg-ws-proxy.packages.${pkgs.stdenv.hostPlatform.system}.default
     happ
     peazip
     obsidian

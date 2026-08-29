@@ -40,6 +40,10 @@
       url = "github:ZenonEl/zapret2-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    tg-ws-proxy = {
+      url = "github:pialtor/tg-ws-proxy-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{ self, nixpkgs, disko, home-manager, nix-flatpak, zapret2-nix, ... }: let
@@ -107,6 +111,7 @@
       inherit (pkgs) mkpasswd;
     };
     happ = pkgs.callPackage ./dev/maintaining/happ.nix { };
+    tgWsProxy = inputs.tg-ws-proxy.packages.${system}.default;
     nixHlp = pkgs.callPackage ./trustedinstaller/scripts/nixos-helper.d/drv.nix {
       commandScripts = ./trustedinstaller/scripts/nixos-helper.d/commands;
       formatter = treefmtEval.config.build.wrapper;
@@ -122,11 +127,12 @@
     formatter.${system} = treefmtEval.config.build.wrapper;
 
     packages.${system} = {
-      inherit fetchTargetDevicePaths installHonorMagicbook genHpasswd happ nixHlp;
+      inherit fetchTargetDevicePaths installHonorMagicbook genHpasswd happ nixHlp tgWsProxy;
       fetch-target-device-paths = fetchTargetDevicePaths;
       install-honor-magicbook = installHonorMagicbook;
       gen-hpasswd = genHpasswd;
       nix-hlp = nixHlp;
+      tg-ws-proxy = tgWsProxy;
       default = installHonorMagicbook;
     };
 
@@ -161,6 +167,11 @@
         type = "app";
         program = "${disko.packages.${system}.default}/bin/disko-install";
         meta.description = "Install NixOS with the pinned disko input";
+      };
+      tg-ws-proxy = {
+        type = "app";
+        program = "${tgWsProxy}/bin/tg-ws-proxy";
+        meta.description = "Run the local Telegram SOCKS5 proxy";
       };
       default = self.apps.${system}.install-honor-magicbook // {
         meta.description = "Install NixOS on an Honor MagicBook X16 Pro";

@@ -8,7 +8,8 @@ let
 in
 {
   name = "wkubearnament";
-  description = "Primary user";
+  # GDM displays this field as the account's visible name.
+  description = "wkubearnament";
   homeDirectory = "/home/wkubearnament";
   shellPackage = pkgs.fish;
   extraGroups = [ "wheel" "networkmanager" "libvirtd" "docker" ];
